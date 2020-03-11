@@ -4,7 +4,7 @@ from nltk.corpus import cmudict
 from nltk.tokenize import SyllableTokenizer
 
 sys.path.append('../') # Finn bedre løsning på dette
-from load_and_store import load_lyrics
+from load_and_store import load_lyrics # Kan fjernes. Input blir fra hoevklasse
 
 # TODO Cmudict-løsningen husker ikke på stor forbokstav
 class SyllableDetector:
@@ -57,7 +57,7 @@ class SyllableDetector:
     vowel_sum = 0
     if syllable.lower() in self.d:
       syl_phonemes = self.d[syllable.lower()]
-      
+
       for phoneme in syl_phonemes[0]:
         if self.is_vowel(phoneme[0]):
           vowel_sum += 1
@@ -66,7 +66,7 @@ class SyllableDetector:
 
       if vowel_sum == 1: return True
     return False
-      
+
 
   def handle_straying_vowels(self, syllables):
     index = 0
@@ -100,7 +100,7 @@ class SyllableDetector:
         new_elements = syllables[:len(syllables) - 1] if len(syllables) > 1 else ['']
         new_elements[-1] += syl_without_er
         return new_elements + ['er']
-    
+
     return syllables
 
   # Checks if combining first and last letters of syllables should be combined
@@ -122,7 +122,7 @@ class SyllableDetector:
   def syllable_as_list_cleaner(self, syl_list):
     num_syls = len(syl_list)
     last_index = num_syls - 1
-    
+
     syl_index = 0
     while syl_index < num_syls:
       item = syl_list[syl_index]
@@ -163,7 +163,7 @@ class SyllableDetector:
           syl_list[syl_index - 1] = prev_item + item
           del syl_list[syl_index]
           num_syls -= 1
-          continue 
+          continue
 
       syl_index += 1
     # print(syl_list)
@@ -179,7 +179,7 @@ class SyllableDetector:
     # Eks. på char_list og phonemes fra cmudict
     # ['r', 'e', 'a', 'd', 'y']
     # R EH1 D IY0
-    
+
     char = char_list.pop(0)
     current_phoneme = phonemes.pop(0)
     first = False
@@ -193,7 +193,7 @@ class SyllableDetector:
         else:
           word += char
         char = char_list.pop(0)
-      
+
       if len(word) > 0:
         new_parts.append(word)
         word = ''
@@ -215,7 +215,7 @@ class SyllableDetector:
         else:
           word += char
           char = char_list.pop(0)
-      
+
       if len(char_list) == 0 and not word.endswith(char):
         word += char
         new_parts.append(word)
@@ -230,7 +230,7 @@ class SyllableDetector:
       difference = len(main_char_list) - len(chars_in_new_parts)
       chars = ''.join([main_char_list[x] for x in range(len(main_char_list) - difference, len(main_char_list))])
       new_parts.append(chars)
-    
+
     # Handles silent e in word endings
     last_element = new_parts[-1]
     last_phonemes = main_phonemes[len(main_phonemes) - 2:]
@@ -240,7 +240,7 @@ class SyllableDetector:
     elif last_element == 'ed' and self.is_vowel(last_phonemes[0][0]) and last_phonemes[1].lower() == 'd':
       new_parts[-1] = 'e'
       new_parts.append('d')
-    
+
     last_element = new_parts[-1]
     if len(last_element) > 2 and last_element.endswith('re') and main_phonemes[-1].startswith('ER'):
       new_parts[-1] = last_element[:len(last_element) - 2]
@@ -259,7 +259,7 @@ class SyllableDetector:
         if len(part) > 0:
           new_parts.append(part)
           part = ''
-        
+
         new_parts.append(phoneme)
       else:
         if first:
@@ -272,7 +272,7 @@ class SyllableDetector:
 
     c_list_len = len(char_list)
     last_element = new_parts[-1]
-    
+
     if len(last_element) == 2 and not self.is_vowel(last_element[0]) and not self.is_vowel(last_element[1]):
       new_parts[-1] = last_element[:len(last_element) - 1]
       new_parts.append(last_element[1:])
@@ -282,7 +282,7 @@ class SyllableDetector:
   def update_syllable_matrix(self, indices, syllable_matrix, start_index):
     for i in reversed(indices):
       syllable_matrix[i] = start_index
-      
+
       if i > 0 and not syllable_matrix[i - 1]:
         syllable_matrix[i - 1] = start_index
       if i < len(syllable_matrix) - 1 and not syllable_matrix[i + 1]:
@@ -294,7 +294,7 @@ class SyllableDetector:
 
     for i in range(len(syllable_matrix)):
       last_phoneme_element = phonemes[i][-1]
-      
+
       if last_phoneme_element.isnumeric():
         syllable_matrix[i] = last_phoneme_element
 
@@ -391,20 +391,20 @@ class SyllableDetector:
 
   def find_syllables_word_from_cmudict(self, word):
     lowered_word = word.lower()
-    
+
     # if lowered_word in d and len(d[lowered_word][0]) > 0: Add if-test back if the try-block is removed
     return self.syllables_from_cmudict(word)
 
   def find_syllables_word(self, word):
     lowered_word = word.lower()
-    
+
     SSP = SyllableTokenizer()
     return SSP.tokenize(word)
-      
+
 
   def find_syllables_line(self, line):
     words = []
-    
+
     line = line.split()
     for word in line:
       try:
@@ -420,10 +420,10 @@ class SyllableDetector:
 
     lines = []
     lyric = self.text_cleaner(self.lyric)
-    
+
     for line_num in range(len(lyric)):
       syls = self.find_syllables_line(lyric[line_num])
-      
+
       if len(syls) > 0:
         lines.append(syls)
 
