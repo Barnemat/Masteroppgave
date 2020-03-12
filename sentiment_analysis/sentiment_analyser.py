@@ -5,7 +5,7 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from nltk import tokenize
 from random import choice
 
-from load_and_store import load_lyrics
+from '../load_and_store.py' import load_lyrics # TODO FIX
 from cosine_similarity import get_cosine_similarities
 
 # Add more cleaning, if needed
