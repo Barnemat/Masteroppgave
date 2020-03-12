@@ -19,4 +19,5 @@ max_note_divisor = 16
 
 # In absolute octave mode of LilyPond octaves are changed by adding commas or quote marks
 # c' is middle C
-allowed_octaves = ['', '\'', '\'\'']
+allowed_melody_octaves = ['', '\'', '\'\'']
+allowed_chord_octaves = [',', '']

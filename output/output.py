@@ -27,7 +27,7 @@ class LilyPondFileGenerator:
             os.mkdir(path)
 
         file_names = [x for x in os.listdir(path) if os.path.isfile(path + x)]
-        len_files = len(file_names) + 1
+        len_files = len([file for file in file_names if file.endswith('.ly')]) + 1
         name = 'output_number_' + str(len_files) + '.ly'
 
         with open(path + name, 'w') as file:
@@ -39,12 +39,31 @@ class LilyPondFileGenerator:
         for out in self.file_start:
             output += out + '\n'
 
-        maj_min = ' \\major' if self.key[1] == 'maj' else ' \\minor'
-        output += '\\time ' + self.time_signature + '\n'
-        output += '\\key ' + self.key[0] + maj_min
-        output += '\n'
+        output += '<<' + self.get_frontmatter()
+        output += self.get_melody_format() + '}\n'
+        output += self.get_frontmatter('bass')
+        output += self.get_chord_format() + '}>>'
 
-        for beat in self.data:
+        for out in self.file_end:
+            output += out + '\n'
+
+        return output
+
+    def get_frontmatter(self, clef=None):
+        maj_min = ' \\major' if self.key[1] == 'maj' else ' \\minor'
+
+        output = '\\new Staff {\n'
+        output += '\\absolute\n'
+        output += '\\clef treble\n' if not clef else '\\clef ' + clef + '\n'
+        output += '\\time ' + self.time_signature + '\n'
+        output += '\\key ' + self.key[0] + maj_min + '\n'
+
+        return output + '\n'
+
+    def get_melody_format(self):
+        output = '{\n'
+
+        for beat in self.data[0]:
             if len(beat) == 0:
                 continue
 
@@ -73,7 +92,12 @@ class LilyPondFileGenerator:
                 output += ' '
                 output = output[:-4] + '\n'
 
-        for out in self.file_end:
-            output += out + '\n'
+        return output + '}\n'
+
+    def get_chord_format(self):
+        output = ''
+
+        for chord in self.data[1]:
+            output += chord + '\n'
 
         return output

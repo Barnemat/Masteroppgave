@@ -1,7 +1,3 @@
 \version "2.18.2"
 
 \score {
-  \new Staff {
-    \set Staff.midiInstrument = #"voice oohs"
-    {
-      \absolute
