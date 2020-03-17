@@ -34,8 +34,7 @@ class Phenotype:
         while syl_num < self.num_syllables:
             beat = self.get_random_beat()
 
-            # Handles case where dotted notes spans several beats
-            # Also moves functionality for processing extra beats for whole and half notes
+            # Moves functionality for processing extra beats for whole and half notes
             if beat[1]:
                 melody.append(beat[0])
                 for element in beat[1]:
@@ -43,14 +42,21 @@ class Phenotype:
             else:
                 melody.append(beat[0])
 
-            syl_num += len(beat[0])
+            syls_used = len(list(filter(lambda x: isinstance(x, list) or not x.startswith('r'), beat[0])))
+            syl_num += syls_used
 
         # TODO: Add an extra method that removes notes exceeds number of syls
         return melody
 
     # Sometimes there is a few to many notes in a melody with regards to syllables
     def clean_melody(self, melody):
-        num_notes = sum([len(x) for x in melody])
+
+        # Need to take rests 'r' into account
+        num_notes = 0
+        for beat in melody:
+            for note in beat:
+                if isinstance(note, list) or not note.startswith('r'):
+                    num_notes += 1
 
         while num_notes > self.num_syllables:
             if len(melody[-1]) == 0:
@@ -156,9 +162,11 @@ class Phenotype:
         return [beat, None]
 
     def get_random_note(self, time, chord_note=False):
-        note = choice(possible_notes)
+        # A note could be a rest, but NOT in a chord
+        note = choice(possible_notes + ['r']) if not chord_note else choice(possible_notes)
 
-        # if note == 'r': return r + str(time) # TODO: ADD LATER
+        if note == 'r':
+            return 'r' + str(time)
 
         maj = self.key[1] == 'maj'
 
@@ -178,11 +186,24 @@ class Phenotype:
 
     def set_random_melisma_in_beat(self, beat):
         if len(beat) == 2:
+            if len(list(filter(lambda x: x.startswith('r'), beat))) > 0:
+                return beat
             return [beat]
 
         melisma_start = randint(0, len(beat) - 2)
         melisma_end = randint(melisma_start + 1, len(beat) - 1)
 
-        new_beat = beat[:melisma_start] + [beat[melisma_start:melisma_end + 1]] + beat[melisma_end + 1:]
+        beat_start = beat[:melisma_start]
+        melisma = [beat[melisma_start:melisma_end + 1]]
+        beat_end = beat[melisma_end + 1:]
 
-        return new_beat
+        if len(list(filter(lambda x: x.startswith('r'), melisma[0]))) > 0:
+            if len(list(filter(lambda x: x.startswith('r'), melisma[0]))) <= 1:
+                return [beat]
+            elif len(list(filter(lambda x: x.startswith('r'), melisma[0]))) > 1:
+                return beat
+            else:
+                beat_start += list(filter(lambda x: x.startswith('r'), melisma[0]))
+                melisma = [list(filter(lambda x: not x.startswith('r'), melisma[0]))]
+
+        return beat_start + melisma + beat_end

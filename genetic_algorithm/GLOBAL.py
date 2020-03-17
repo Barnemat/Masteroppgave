@@ -10,7 +10,8 @@ possible_notes = ['a', 'a-b', 'b', 'c', 'c-d', 'd', 'd-e', 'e', 'f', 'f-g', 'g',
 # Defines if "black tangents" should be sharp/flat in a given key in both major and minor scales
 # E.g. If the key is G major, it's 'black tangent' notes ends with 'is' not 'es'
 # LilyPond needs this to be specified
-major = [['g', 'd', 'a', 'e', 'b', 'fis', 'cis'], ['ces', 'ges', 'des', 'aes', 'ees', 'bes', 'f']]
+# TODO: Check for faults here
+major = [['g', 'd', 'a', 'e', 'b', 'fis', 'cis'], ['ces', 'ges', 'des', 'aes', 'ees', 'bes', 'f', 'dis']]
 minor = [['e', 'b', 'fis', 'cis', 'gis', 'dis'], ['ees', 'bes', 'f', 'c', 'g', 'd']]
 
 # Sets the maximum alloved note division
