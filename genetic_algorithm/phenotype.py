@@ -10,7 +10,6 @@ class Phenotype:
         self.key = key
         self.num_syllables = num_syllables
         self.time_signature = time_signature if time_signature else '4/4'
-        self.syls_left = num_syllables  # Temp value for hanlding the number of syllables to set notes to
         self.note_lengths = note_lengths
         self.genes = None
 
@@ -50,13 +49,17 @@ class Phenotype:
 
     # Sometimes there is a few to many notes in a melody with regards to syllables
     def clean_melody(self, melody):
+        melody = self.dot_note_handler(melody)
 
         # Need to take rests 'r' into account
         num_notes = 0
         for beat in melody:
             for note in beat:
                 if isinstance(note, list) or not note.startswith('r'):
-                    num_notes += 1
+                    if isinstance(note, list):
+                        num_notes += len(note)
+                    else:
+                        num_notes += 1
 
         while num_notes > self.num_syllables:
             if len(melody[-1]) == 0:
@@ -66,7 +69,9 @@ class Phenotype:
             del melody[-1][-1]
             num_notes -= 1
 
-        melody = self.dot_note_handler(melody)
+        while len(melody) % int(self.time_signature[0]) != 0:
+            melody.append([])
+
         return melody
 
     def dot_note_handler(self, melody):
@@ -170,11 +175,14 @@ class Phenotype:
 
         maj = self.key[1] == 'maj'
 
+        # TODO: If error occurs, check Github master
         if len(note) > 1:
-            if maj:
-                note = note[-1] + 'is' if self.key in major[0] else note[0] + 'es'
+            if self.key in (major[0] if maj else minor[0]):
+                note = note[-1] + 'is'
+            elif self.key in (major[1] if maj else minor[1]):
+                note = note[0] + 'es'
             else:
-                note = note[-1] + 'is' if self.key in minor[0] else note[0] + 'es'
+                note = note[choice([-1, 0])]
 
         octave = choice(allowed_chord_octaves) if chord_note else choice(allowed_melody_octaves)
 

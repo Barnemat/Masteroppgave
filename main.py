@@ -11,5 +11,6 @@ if __name__ == '__main__':
 
     ga = GA(1, lyric)
 
+    # print(ga.population[0].genes)
     file_generator = LilyPondFileGenerator(ga.population[0].genes, ga.key, ga.time_signature, lyric.get_syllables())
     file_generator.generate_file(os.getcwd() + '/output/outfiles/')
