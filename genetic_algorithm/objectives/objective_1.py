@@ -1,5 +1,5 @@
 from genetic_algorithm.objectives.objective import Objective
-from genetic_algorithm.GLOBAL import get_scale_notes, remove_note_timing, remove_note_octave
+from genetic_algorithm.GLOBAL import get_scale_notes, remove_note_timing, remove_note_octave, get_note_distance
 
 
 class Objective1(Objective):
@@ -62,8 +62,9 @@ class Objective1(Objective):
             notes = scale_pitches + non_scale_pitches
             ornament_notes = get_ornament_notes(measure, chord_pitches, notes)
 
+            fitness_value = 0
             for func in self.fitness_functions:
-                fitness_value = func(
+                fitness_value += func(
                     chord_pitches=chord_pitches,
                     scale_pitches=scale_pitches,
                     non_scale_pitches=non_scale_pitches,
@@ -71,8 +72,12 @@ class Objective1(Objective):
                     measure=measure
                 )
 
-                print(fitness_value)
-                self.fitness_score += fitness_value
+            self.fitness_score += fitness_value
+
+            print('Measure:', measure)
+            print('Measure fitness:', fitness_value)
+
+        print('Total fitness value:', self.fitness_score)
 
 
 def get_chord_pitches(measure):
@@ -265,14 +270,42 @@ def f6(**kwargs):
 
 def f7(**kwargs):
     '''
-        # TODO: Decide if local melody and text fitness should be here or other objective
+        If many intervals have a greater semitone span than a fifth, it will sound more chaotic
+        One jump > 7 < 13 is allowed in each measure, as opposed to Olseng and Wu
+        if (num_intervals of size 2 with semitone span > 7) > 1 or span > 12:
+            sum(interval span for interval in intervals if span > 7)
+    '''
+
+    melody = kwargs['measure'][0]
+    fitness_score = 0
+
+    allow = True
+    for index in range(len(melody) - 1):
+        note = melody[index]
+        next_note = melody[index + 1]
+
+        if note == 'r' or next_note == 'r':
+            continue
+
+        distance = get_note_distance(note, next_note)
+
+        if distance > 7:
+            if not allow or distance > 12:
+                fitness_score -= distance - 7
+            allow = False
+
+    return fitness_score
+
+
+def f8(**kwargs):
+    '''
+        # TODO: Decide if augmented 9th is actually that bad
     '''
     return 0
 
 
-def f8(**kwargs):
-    return 0
-
-
 def f9(**kwargs):
+    '''
+        # TODO: Decide if local melody and text fitness should be here or other objective
+    '''
     return 0

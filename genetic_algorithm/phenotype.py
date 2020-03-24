@@ -21,7 +21,6 @@ class Phenotype:
 
     def set_init_genes(self):
         melody = self.clean_melody(self.get_init_melody())
-
         chords = self.get_init_chords(melody)
 
         self.genes = [melody, chords]
@@ -30,8 +29,15 @@ class Phenotype:
         melody = []
 
         syl_num = 0
-        while syl_num < self.num_syllables:
+        while True:
             beat = self.get_random_beat()
+
+            syls_used = len(list(filter(lambda x: isinstance(x, list) or not x.startswith('r'), beat[0])))
+
+            if syl_num + syls_used > self.num_syllables:
+                while len(beat[0]) and syl_num + syls_used > self.num_syllables:
+                    beat[0] = beat[0][:-1]
+                    syls_used -= 1
 
             # Moves functionality for processing extra beats for whole and half notes
             if beat[1]:
@@ -41,10 +47,11 @@ class Phenotype:
             else:
                 melody.append(beat[0])
 
-            syls_used = len(list(filter(lambda x: isinstance(x, list) or not x.startswith('r'), beat[0])))
             syl_num += syls_used
 
-        # TODO: Add an extra method that removes notes exceeds number of syls
+            if syl_num >= self.num_syllables:
+                break
+
         return melody
 
     # Sometimes there is a few to many notes in a melody with regards to syllables
@@ -56,10 +63,7 @@ class Phenotype:
         for beat in melody:
             for note in beat:
                 if isinstance(note, list) or not note.startswith('r'):
-                    if isinstance(note, list):
-                        num_notes += len(note)
-                    else:
-                        num_notes += 1
+                    num_notes += 1
 
         while num_notes > self.num_syllables:
             if len(melody[-1]) == 0:
