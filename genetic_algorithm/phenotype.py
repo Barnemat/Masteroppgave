@@ -170,9 +170,9 @@ class Phenotype:
 
         return [beat, None]
 
-    def get_random_note(self, time, chord_note=False):
+    def get_random_note(self, time, chord_note=False, only_pitch=False):
         # A note could be a rest, but NOT in a chord
-        note = choice(possible_notes + ['r']) if not chord_note else choice(possible_notes)
+        note = choice(possible_notes + ['r']) if not chord_note and not only_pitch else choice(possible_notes)
 
         if note == 'r':
             return 'r' + str(time)
@@ -192,7 +192,7 @@ class Phenotype:
 
         # Sets the chance of a note being dotted
         # Dotted notes need to be handled to keep time
-        dotted = '.' if not chord_note and randint(0, 100) < 10 else ''
+        dotted = '.' if not chord_note and not only_pitch and randint(0, 100) < 10 else ''
 
         return note + octave + str(time) + dotted
 

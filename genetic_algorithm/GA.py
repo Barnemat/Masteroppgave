@@ -5,6 +5,7 @@ from genetic_algorithm.GLOBAL import possible_notes, major, minor
 from genetic_algorithm.objectives.objective_1 import Objective1
 from syllable_handling.syllable_handling import SyllableDetector
 from genetic_algorithm.crossover import apply_crossover
+from genetic_algorithm.mutation import apply_mutation
 
 
 class GA:
@@ -72,6 +73,10 @@ class GA:
 
         self.population = self.population[:len(self.population) // 2]
         self.population.extend(new)
+
+        print(self.population[0].genes[0])
+        apply_mutation(self.population[0])
+        print(self.population[0].genes[0])
 
 
 def get_valid_min_key(note):
