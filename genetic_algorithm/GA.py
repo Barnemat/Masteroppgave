@@ -4,6 +4,7 @@ from genetic_algorithm.phenotype import Phenotype
 from genetic_algorithm.GLOBAL import possible_notes, major, minor
 from genetic_algorithm.objectives.objective_1 import Objective1
 from syllable_handling.syllable_handling import SyllableDetector
+from genetic_algorithm.crossover import apply_crossover
 
 
 class GA:
@@ -19,9 +20,6 @@ class GA:
         self.generate_musical_key()
         self.set_possible_note_lengths()
         self.generate_population()
-
-        objective1_test = Objective1()
-        objective1_test.get_total_fitness_value(self.population[0])
 
     def set_possible_note_lengths(self):
         note_lengths = [1]
@@ -57,6 +55,23 @@ class GA:
 
         for _ in range(self.population_size):
             self.population.append(Phenotype(self.key, self.num_syllables, self.time_signature, self.note_lengths))
+
+    def iterate(self):
+        objective1 = Objective1()
+        sorted(self.population, key=lambda x: objective1.get_total_fitness_value(x))
+
+        best = self.population[:len(self.population) // 2]
+
+        new = []
+        for pheno_index in range(len(best)):
+            if pheno_index == len(best) - 1:
+                new.append(apply_crossover(best[pheno_index], best[0]))
+                break
+
+            new.append(apply_crossover(best[pheno_index], best[pheno_index + 1]))
+
+        self.population = self.population[:len(self.population) // 2]
+        self.population.extend(new)
 
 
 def get_valid_min_key(note):

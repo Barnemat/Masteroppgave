@@ -74,10 +74,11 @@ class Objective1(Objective):
 
             self.fitness_score += fitness_value
 
-            print('Measure:', measure)
-            print('Measure fitness:', fitness_value)
+            # print('Measure:', measure)
+            # print('Measure fitness:', fitness_value)
 
-        print('Total fitness value:', self.fitness_score)
+        # print('Total fitness value:', self.fitness_score)
+        return self.fitness_score
 
 
 def get_chord_pitches(measure):
