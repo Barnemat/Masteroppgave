@@ -1,8 +1,11 @@
-from random import choice
+from random import choice, randint
 from genetic_algorithm.GLOBAL import max_note_divisor
 from genetic_algorithm.phenotype import Phenotype
-from genetic_algorithm.GLOBAL import possible_notes
+from genetic_algorithm.GLOBAL import possible_notes, major, minor
+from genetic_algorithm.objectives.objective_1 import Objective1
 from syllable_handling.syllable_handling import SyllableDetector
+from genetic_algorithm.crossover import apply_crossover
+from genetic_algorithm.mutation import apply_mutation
 
 
 class GA:
@@ -30,12 +33,7 @@ class GA:
         self.note_lengths = note_lengths
 
     def generate_musical_key(self, maj=None):
-        while True:
-            note = choice(possible_notes)  # TODO: Muligens øke sannsynligheten for mer vanlige tonearter
-
-            # If r (rest) is later added as valid note (rest cannot be key)
-            if note != 'r':
-                break
+        note = choice(possible_notes)  # TODO: Muligens øke sannsynligheten for mer vanlige tonearter
 
         # Major/minor should perhaps not be specified here, but be handled by a fitness function
         # Either way it should be descided by sentiment input and not randomly
@@ -43,10 +41,10 @@ class GA:
             maj = choice(['min', 'maj'])
 
         if len(note) > 1:
-            if not maj:
+            if maj == 'min':
                 self.key = get_valid_min_key(note)
             else:
-                self.key = [note[0] + 'is' if choice([0, 2]) == 0 else note[2] + 'es']
+                self.key = get_valid_maj_key(note)
         else:
             self.key = [note]
 
@@ -59,6 +57,28 @@ class GA:
         for _ in range(self.population_size):
             self.population.append(Phenotype(self.key, self.num_syllables, self.time_signature, self.note_lengths))
 
+    def iterate(self):
+        objective1 = Objective1()
+        sorted(self.population, key=lambda x: objective1.get_total_fitness_value(x))
+
+        best = self.population[:len(self.population) // 2]
+
+        new = []
+        for pheno_index in range(len(best)):
+            if pheno_index == len(best) - 1:
+                new.append(apply_crossover(best[pheno_index], best[0]))
+                break
+
+            new.append(apply_crossover(best[pheno_index], best[pheno_index + 1]))
+
+        self.population = self.population[:len(self.population) // 2]
+        self.population.extend(new)
+
+        for phenotype in self.population:
+            if randint(0, 100) <= 5:  # Chance of phenotype mutating
+                apply_mutation(phenotype)
+        # print(self.population[0].genes[0])
+
 
 def get_valid_min_key(note):
     '''
@@ -67,7 +87,24 @@ def get_valid_min_key(note):
     Ref: https://upload.wikimedia.org/wikipedia/commons/f/ff/Circle_of_fifths_deluxe_4_de.svg
     '''
 
-    if note == 'd-e':
-        return [note[0] + 'is' if choice([0, 2]) == 0 else note[2] + 'es']
-    else:
-        return note[0] + 'is'
+    if note[0] + 'is' in minor[0]:
+        return [note[0] + 'is']
+    elif note[-1] + 'es' in minor[1]:
+        return [note[-1] + 'es']
+
+    return [note[choice([0, 2])]]
+
+
+def get_valid_maj_key(note):
+    '''
+    In musical notation the only major key usually allowed to be sharp is F#
+    Otherwise they are flat
+    Ref: https://upload.wikimedia.org/wikipedia/commons/f/ff/Circle_of_fifths_deluxe_4_de.svg
+    '''
+
+    if note[0] + 'is' in major[0]:
+        return [note[0] + 'is']
+    elif note[-1] + 'es' in major[1]:
+        return [note[-1] + 'es']
+
+    return [note[choice([0, 2])]]
