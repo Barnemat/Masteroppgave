@@ -1,4 +1,4 @@
-from random import choice
+from random import choice, randint
 from genetic_algorithm.GLOBAL import max_note_divisor
 from genetic_algorithm.phenotype import Phenotype
 from genetic_algorithm.GLOBAL import possible_notes, major, minor
@@ -74,9 +74,10 @@ class GA:
         self.population = self.population[:len(self.population) // 2]
         self.population.extend(new)
 
-        print(self.population[0].genes[0])
-        apply_mutation(self.population[0])
-        print(self.population[0].genes[0])
+        for phenotype in self.population:
+            if randint(0, 100) <= 5:  # Chance of phenotype mutating
+                apply_mutation(phenotype)
+        # print(self.population[0].genes[0])
 
 
 def get_valid_min_key(note):

@@ -19,7 +19,7 @@ minor_scale_distances = [0, 2, 1, 2, 2, 1, 2, 2]
 # LilyPond needs this to be specified
 # TODO: Check for faults here
 major = [['g', 'd', 'a', 'e', 'b', 'fis'], ['ges', 'des', 'aes', 'ees', 'bes', 'f']]
-minor = [['e', 'b', 'fis', 'cis', 'gis', 'dis'], ['ees', 'bes', 'f', 'c', 'g', 'd']]
+minor = [['e', 'b', 'fis', 'cis', 'gis', 'dis', 'ais'], ['ees', 'bes', 'f', 'c', 'g', 'd']]
 
 # Sets the maximum alloved note division
 # E.g. max_note_divisor = 16 means that 16th notes are the shortest notes available
@@ -40,6 +40,8 @@ maj_triad_distances = [0, 4, 7]
 min_triad_distances = [0, 3, 7]
 dim_distances = [0, 3, 6]
 maj_aug = [0, 4, 8]
+
+triads = [min_triad_distances, maj_triad_distances, dim_distances, maj_aug]
 
 
 def get_absolute_note_list():
@@ -107,6 +109,19 @@ def remove_note_timing(note):
     return note
 
 
+def get_note_timing(note):
+
+    dotted = ''
+    if note.endswith('.'):
+        dotted = '.'
+        note = note[:len(note) - 1]
+
+    while not note[0].isdigit():
+        note = note[1:]
+
+    return note + dotted
+
+
 def remove_note_octave(note):
     return ''.join([char for char in note if char.isalpha() or char.isnumeric()])
 
@@ -128,6 +143,7 @@ def get_note_abs_index(note):
         else:
             if note == absolute_note_list[i]:
                 return i
+    return -1
 
 
 def get_note_distance(note1, note2):
@@ -135,5 +151,13 @@ def get_note_distance(note1, note2):
         Gets the semitone distance between two notes
         Timing needs to be removed first
     '''
+    if not note1 or not note2:
+        return 0
 
-    return abs(get_note_abs_index(note1) - get_note_abs_index(note2))
+    note1_index = get_note_abs_index(note1)
+    note2_index = get_note_abs_index(note2)
+
+    if note1_index == -1 or note2 == -1:
+        return 0
+
+    return abs(note1_index - note2_index)

@@ -35,6 +35,9 @@ class Objective1(Objective):
 
             measure = [[], []]
             for _ in range(beat_size):
+                if index == len(melody_beats):
+                    break
+
                 beat = melody_beats[index]
                 for note in beat:
                     if isinstance(note, list):
@@ -285,7 +288,7 @@ def f7(**kwargs):
         note = melody[index]
         next_note = melody[index + 1]
 
-        if note == 'r' or next_note == 'r':
+        if not note or not next_note or note == 'r' or next_note == 'r':
             continue
 
         distance = get_note_distance(note, next_note)

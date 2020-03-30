@@ -1,7 +1,17 @@
 from random import choice, randint
 from math import ceil
 
-from genetic_algorithm.GLOBAL import possible_notes, major, minor, allowed_melody_octaves, allowed_chord_octaves
+from genetic_algorithm.GLOBAL import (
+    possible_notes,
+    major,
+    minor,
+    allowed_melody_octaves,
+    allowed_chord_octaves,
+    get_note_abs_index,
+    absolute_note_list,
+    triads,
+    get_key_sharps_flats
+)
 
 
 class Phenotype:
@@ -99,23 +109,36 @@ class Phenotype:
 
         return melody
 
-    def get_init_chords(self, melody):
+    def get_init_chords(self, melody, num_chords=None, root=None):
         '''
         Initially chords are added one in each measure with a duration of the whole measure
+        num_chords, and especially root are used in special cases (e.g. mutation) where function
+        is reused
         '''
-        num_chords = int(ceil(len(melody) / int(self.time_signature[0])))
+        num_chords = num_chords if num_chords else int(ceil(len(melody) / int(self.time_signature[0])))
         chords = []
 
         for _ in range(num_chords):
             chord = '< '
-            notes = []
+            notes = [root] if root else [self.get_random_note(0, True)[:-1]]
+            triad = choice(triads)
 
-            for x in range(randint(3, 4)):  # Allows for chords with 3 or 4 notes
-                note = self.get_random_note(0, True)[:-1]
-
-                # There's no use to having the (exact) same notes appearing twice in a chord
-                while note in notes:
-                    note = self.get_random_note(0, True)[:-1]
+            note = notes[0]
+            note_abs_index = get_note_abs_index(note)
+            for x in range(1, randint(3, 4)):  # Allows for chords with 3 or 4 notes
+                if x == 3:
+                    tries = 20
+                    while tries > 0 and (note in notes or get_note_abs_index(note) < note_abs_index):
+                        note = self.get_random_note(0, True)[:-1]
+                        tries -= 1
+                else:
+                    note = absolute_note_list[note_abs_index + triad[x]]
+                    if isinstance(note, list):
+                        sharps_flats = get_key_sharps_flats(self.key)
+                        if sharps_flats == 'es':
+                            note = note[0]
+                        else:
+                            note = note[1]
 
                 notes.append(note)
 
