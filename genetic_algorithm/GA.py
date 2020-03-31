@@ -3,6 +3,7 @@ from genetic_algorithm.GLOBAL import max_note_divisor
 from genetic_algorithm.phenotype import Phenotype
 from genetic_algorithm.GLOBAL import possible_notes, major, minor
 from genetic_algorithm.objectives.objective_1 import Objective1
+from genetic_algorithm.objectives.objective_2 import Objective2
 from syllable_handling.syllable_handling import SyllableDetector
 from genetic_algorithm.crossover import apply_crossover
 from genetic_algorithm.mutation import apply_mutation
@@ -59,6 +60,11 @@ class GA:
 
     def iterate(self):
         objective1 = Objective1()
+        objective1.get_total_fitness_value(self.population[0])
+
+        objective2 = Objective2()
+        objective2.get_total_fitness_value(self.population[0])
+        '''
         sorted(self.population, key=lambda x: objective1.get_total_fitness_value(x))
 
         best = self.population[:len(self.population) // 2]
@@ -77,6 +83,7 @@ class GA:
         for phenotype in self.population:
             if randint(0, 100) <= 5:  # Chance of phenotype mutating
                 apply_mutation(phenotype)
+        '''
         # print(self.population[0].genes[0])
 
 

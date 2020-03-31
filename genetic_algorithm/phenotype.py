@@ -215,7 +215,7 @@ class Phenotype:
 
         # Sets the chance of a note being dotted
         # Dotted notes need to be handled to keep time
-        dotted = '.' if not chord_note and not only_pitch and randint(0, 100) < 10 else ''
+        dotted = '.' if not time == 16 and not chord_note and not only_pitch and randint(0, 100) < 10 else ''
 
         return note + octave + str(time) + dotted
 
