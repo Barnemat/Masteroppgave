@@ -7,7 +7,7 @@ from output.output import LilyPondFileGenerator
 if __name__ == '__main__':
     texts = load_lyrics('/syllable_handling/testtekster/')
     # lyrics = [Lyric(texts[title]) for title in texts]
-    lyric = Lyric(texts['john-lennon-mother-1v'])
+    lyric = Lyric(texts['luther-vandross-never-too-much'])
 
     population_size = 10
     num_generations = 1

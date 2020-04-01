@@ -57,6 +57,7 @@ class Objective1(Objective):
             measure[1].extend([x for x in chord if x.find('>') == -1])
             measures.append(measure)
 
+        fitness_value = 0
         for measure in measures:
             chord_pitches = get_chord_pitches(measure)
             scale_pitches = get_scale_pitches(measure, scale, chord_pitches)
@@ -65,7 +66,6 @@ class Objective1(Objective):
             notes = scale_pitches + non_scale_pitches
             ornament_notes = get_ornament_notes(measure, chord_pitches, notes)
 
-            fitness_value = 0
             for func in self.fitness_functions:
                 fitness_value += func(
                     chord_pitches=chord_pitches,
@@ -75,11 +75,11 @@ class Objective1(Objective):
                     measure=measure
                 )
 
-            self.fitness_score += fitness_value
-
             # print('Measure:', measure)
             # print('Measure fitness:', fitness_value)
 
+        # Normalize somewhat with respect to the number of measures in music
+        self.fitness_score = round(fitness_value / len(measures), 4)
         # print('Total fitness value:', self.fitness_score)
         return self.fitness_score
 

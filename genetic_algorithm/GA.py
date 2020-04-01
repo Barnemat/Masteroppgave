@@ -1,12 +1,17 @@
+from nltk.corpus import cmudict
 from random import choice, randint
+
 from genetic_algorithm.GLOBAL import max_note_divisor
 from genetic_algorithm.phenotype import Phenotype
 from genetic_algorithm.GLOBAL import possible_notes, major, minor
 from genetic_algorithm.objectives.objective_1 import Objective1
 from genetic_algorithm.objectives.objective_2 import Objective2
+from genetic_algorithm.objectives.objective_3 import Objective3
 from syllable_handling.syllable_handling import SyllableDetector
 from genetic_algorithm.crossover import apply_crossover
 from genetic_algorithm.mutation import apply_mutation
+
+d = cmudict.dict()
 
 
 class GA:
@@ -22,6 +27,7 @@ class GA:
         self.generate_musical_key()
         self.set_possible_note_lengths()
         self.generate_population()
+        self.phonemes = get_phonemes_from_syls(self.syllable_detector.syllables)
 
     def set_possible_note_lengths(self):
         note_lengths = [1]
@@ -60,10 +66,13 @@ class GA:
 
     def iterate(self):
         objective1 = Objective1()
-        objective1.get_total_fitness_value(self.population[0])
+        print(objective1.get_total_fitness_value(self.population[0]))
 
         objective2 = Objective2()
-        objective2.get_total_fitness_value(self.population[0])
+        print(objective2.get_total_fitness_value(self.population[0]))
+
+        objective3 = Objective3()
+        objective3.get_total_fitness_value(self.population[0], self.syllable_detector.syllables, self.phonemes)
         '''
         sorted(self.population, key=lambda x: objective1.get_total_fitness_value(x))
 
@@ -115,3 +124,27 @@ def get_valid_maj_key(note):
         return [note[-1] + 'es']
 
     return [note[choice([0, 2])]]
+
+
+def get_phonemes_from_syls(syllables):
+    syls = [y for x in syllables for y in x]
+
+    phonemes = []
+    for syl in syls:
+        word = ''.join(syl).lower()
+
+        if word not in d:
+            phonemes.append([])
+            continue
+
+        phoneme = d[word][0]
+
+        stress_values = [x[-1] for x in phoneme if x[-1].isnumeric()]
+
+        if len(stress_values) != len(syl):
+            phonemes.append([])
+            continue
+
+        phonemes.append(phoneme)
+
+    return phonemes

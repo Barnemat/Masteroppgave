@@ -9,8 +9,6 @@ from genetic_algorithm.GLOBAL import (
     allowed_chord_octaves,
     max_note_divisor,
     remove_note_timing,
-    triads,
-    absolute_note_list,
     get_note_abs_index
 )
 

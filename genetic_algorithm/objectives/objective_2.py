@@ -16,13 +16,37 @@ class Objective2(Objective):
         Handles the objective of handling global melody optimization
     '''
 
-    def __init__(self):
+    def __init__(self, target_values=None):
         super().__init__()
 
         self.fitness_functions.extend([
             f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19,
-            f20, f21
+            f20
         ])
+
+        if target_values:
+            self.target_values = target_values
+        else:
+            self.target_values = [
+                0.30, 0.60, 0.30, 0.05, 0.05, 0.70, 0.60, 0.30, 0.30, 0.10, 0.40,  # Rhythmic variety
+                0.80, 0.30, 0.60, 0.70, 0.30, 0.30, 0.20, 0.20, 0.10  # Semi-tone value (change with sentiment)
+            ]
+
+        '''
+        Olseng values:
+        Step Movement 0.60
+        Non-Scale Pitch Quanta 0.00
+        Contour Stability 0.60
+        Contour Direction 0.70
+        Pitch Frequency 0.30
+        Rest Frequency 0.10
+        Rest Density 0.10
+        Rhythmic Variety 0.40
+        Syncopation 0.00
+        Repeated Pitches 0.30
+        Repeated Timings 0.65
+        On-Beat Pitch Coverage 0.70
+        '''
 
     def get_total_fitness_value(self, phenotype):
         '''
@@ -35,17 +59,17 @@ class Objective2(Objective):
         intervals = get_intervals(notes)
         quanta = get_quanta(notes)
 
-        print(melody)
-        print(key, time_signature)
-        print(scale)
-        print(notes)
-        print(intervals)
-        print(quanta)
+        # print(melody)
+        # print(key, time_signature)
+        # print(scale)
+        # print(notes)
+        # print(intervals)
+        # print(quanta)
 
-        func_num = 1
+        func_num = 0
         for func in self.fitness_functions:
-            print('fitness function:', func_num)
-            fitness_score = func(
+            print('fitness function:', func_num + 1)
+            fitness_score = self.compare_with_target_value(func(
                 melody=melody,
                 key=key,
                 time_signature=time_signature,
@@ -53,12 +77,15 @@ class Objective2(Objective):
                 notes=notes,
                 intervals=intervals,
                 quanta=quanta
-            )
+            ), func_num)
             self.fitness_score += fitness_score
             print(fitness_score)
             func_num += 1
 
         return self.fitness_score
+
+    def compare_with_target_value(self, value, target_index):
+        return 1 - abs(value - self.target_values[target_index])
 
 
 def get_notes(melody):
@@ -123,7 +150,7 @@ def f1(**kwargs):
     pitches = [remove_note_octave(remove_note_timing(x)) for x in notes]
     distinct_notes = list(set([x for x in pitches]))
 
-    return len(distinct_notes) / len(notes)
+    return round(len(distinct_notes) / len(notes), 4)
 
 
 def f2(**kwargs):
@@ -148,7 +175,7 @@ def f2(**kwargs):
     if max_index - min_index > note_range:
         return 1.0
 
-    return (max_index - min_index) / note_range
+    return round((max_index - min_index) / note_range, 4)
 
 
 def f3(**kwargs):
@@ -167,7 +194,7 @@ def f3(**kwargs):
             tonic_dominant.append(notes[note_index])
 
     pitch_quanta = get_quanta(tonic_dominant)
-    return pitch_quanta / quanta
+    return round(pitch_quanta / quanta, 4)
 
 
 def f4(**kwargs):
@@ -185,7 +212,7 @@ def f4(**kwargs):
             not_in_scale.append(notes[note_index])
 
     non_scale_quanta = get_quanta(not_in_scale)
-    return non_scale_quanta / quanta
+    return round(non_scale_quanta / quanta, 4)
 
 
 '''
@@ -217,7 +244,7 @@ def f5(**kwargs):
         elif distance in dissonance_values[2] or distance >= 13:
             dissonance_ratings.append(1.0)
 
-    return sum(dissonance_ratings) / len(intervals)
+    return round(sum(dissonance_ratings) / len(intervals), 4)
 
 
 def f6(**kwargs):
@@ -238,7 +265,7 @@ def f6(**kwargs):
         if note1_index < note2_index:
             rising_intervals += 1
 
-    return rising_intervals / len(intervals)
+    return round(rising_intervals / len(intervals), 4)
 
 
 def f7(**kwargs):
@@ -262,7 +289,7 @@ def f7(**kwargs):
         ):
             cons_intervals += 1
 
-        return cons_intervals / (len(intervals) - 1)
+        return round(cons_intervals / (len(intervals) - 1), 4)
 
 
 def f8(**kwargs):
@@ -281,7 +308,7 @@ def f8(**kwargs):
         if distance == 1 or distance == 2:
             diatonic_steps += 1
 
-    return diatonic_steps / len(intervals)
+    return round(diatonic_steps / len(intervals), 4)
 
 
 def f9(**kwargs):
@@ -291,7 +318,7 @@ def f9(**kwargs):
     notes = [note for note in kwargs['notes'] if not note.startswith('r')]
     quanta = kwargs['quanta']
 
-    return len(notes) / quanta
+    return round(len(notes) / quanta, 4)
 
 
 def f10(**kwargs):
@@ -302,7 +329,7 @@ def f10(**kwargs):
     rests = [note for note in kwargs['notes'] if note.startswith('r')]
     rest_quanta = get_quanta(rests)
 
-    return rest_quanta / quanta
+    return round(rest_quanta / quanta, 4)
 
 
 def f11(**kwargs):
@@ -314,7 +341,7 @@ def f11(**kwargs):
     possible_durations = ((max_note_divisor // 4) * 2) + 1  # Dotted notes doubles + 1 the possible values
     note_durations = list(set([get_note_timing(note) for note in notes]))
 
-    return len(note_durations) / possible_durations
+    return round(len(note_durations) / possible_durations, 4)
 
 
 def f12(**kwargs):
@@ -326,7 +353,7 @@ def f12(**kwargs):
     timings = ['1.', '1', '2.', '2', '4.', '4', '8.', '8', '16']
     note_durations = list(set([timings.index(get_note_timing(note)) + 1 for note in notes]))
 
-    return (max(note_durations) / min(note_durations)) / len(timings)
+    return round((max(note_durations) / min(note_durations)) / len(timings), 4)
 
 
 def f13(**kwargs):
@@ -345,7 +372,7 @@ def f13(**kwargs):
         elif note_1 == note_2:
             same_note_intervals += 1
 
-    return same_note_intervals / len(intervals)
+    return round(same_note_intervals / len(intervals), 4)
 
 
 def f14(**kwargs):
@@ -365,7 +392,7 @@ def f14(**kwargs):
         if note_1 == note_2:
             same_duration_intervals += 1
 
-    return same_duration_intervals / len(intervals)
+    return round(same_duration_intervals / len(intervals), 4)
 
 
 def f15(**kwargs):
@@ -379,7 +406,7 @@ def f15(**kwargs):
         if len(beat) == 1:
             one_beat_pitches += 1
 
-    return one_beat_pitches / len(melody)
+    return round(one_beat_pitches / len(melody), 4)
 
 
 def f16(**kwargs):
@@ -396,7 +423,7 @@ def f16(**kwargs):
         if first_notes == compare_with:
             repeated_3_patterns += 1
 
-    return repeated_3_patterns / (len(notes) - 4)
+    return round(repeated_3_patterns / (len(notes) - 4), 4)
 
 
 def f17(**kwargs):
@@ -417,7 +444,7 @@ def f17(**kwargs):
         if first_notes == compare_with:
             repeated_3_patterns += 1
 
-    return repeated_3_patterns / (len(notes) - 4)
+    return round(repeated_3_patterns / (len(notes) - 4), 4)
 
 
 def f18(**kwargs):
@@ -434,7 +461,7 @@ def f18(**kwargs):
         if first_notes == compare_with:
             repeated_4_patterns += 1
 
-    return repeated_4_patterns / (len(notes) - 5)
+    return round(repeated_4_patterns / (len(notes) - 5), 4)
 
 
 def f19(**kwargs):
@@ -461,7 +488,7 @@ def f19(**kwargs):
         if first_notes == compare_with:
             repeated_4_patterns += 1
 
-    return repeated_4_patterns / (len(notes) - 5)
+    return round(repeated_4_patterns / (len(notes) - 5), 4)
 
 
 '''
@@ -495,12 +522,4 @@ def f20(**kwargs):
         if distance == 1:
             semitone_steps += 1
 
-    return semitone_steps / len(intervals)
-
-
-def f21(**kwargs):
-    '''
-        # TODO: IMPLEMENT!!
-        Word in lyric stress and rhythm satisfaction
-    '''
-    return 0.0
+    return round(semitone_steps / len(intervals), 4)
