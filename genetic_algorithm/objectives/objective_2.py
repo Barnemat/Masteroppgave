@@ -67,9 +67,10 @@ class Objective2(Objective):
         # print(quanta)
 
         func_num = 0
+        fitness_score = 0
         for func in self.fitness_functions:
             print('fitness function:', func_num + 1)
-            fitness_score = self.compare_with_target_value(func(
+            fitness_score += self.compare_with_target_value(func(
                 melody=melody,
                 key=key,
                 time_signature=time_signature,
@@ -78,11 +79,12 @@ class Objective2(Objective):
                 intervals=intervals,
                 quanta=quanta
             ), func_num)
-            self.fitness_score += fitness_score
+            # self.fitness_score += fitness_score
+            fitness_score = round(fitness_score, 4)
             print(fitness_score)
             func_num += 1
 
-        return self.fitness_score
+        return fitness_score
 
     def compare_with_target_value(self, value, target_index):
         return 1 - abs(value - self.target_values[target_index])

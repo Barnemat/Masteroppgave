@@ -10,32 +10,37 @@ class Objective3(Objective):
         Handles the objective of handling global melody optimization
     '''
 
-    def __init__(self):
+    def __init__(self, syllables, phonemes):
         super().__init__()
 
         self.fitness_functions.extend([
             f1
         ])
 
-    def get_total_fitness_value(self, phenotype, syllables, phonemes):
+        self.syllables = syllables
+        self.phonemes = phonemes
+
+    def get_total_fitness_value(self, phenotype):
         '''
         '''
         melody = phenotype.genes[0].copy()
 
         func_num = 1
+        fitness_score = 0
         for func in self.fitness_functions:
             print('fitness function:', func_num)
-            fitness_score = func(
+            fitness_score += func(
                 melody=melody,
-                phonemes=phonemes,
-                syllables=syllables
+                phonemes=self.phonemes,
+                syllables=self.syllables
             )
 
-            self.fitness_score += fitness_score
+            fitness_score = round(fitness_score, 4)
+            # self.fitness_score += fitness_score
             print(fitness_score)
             func_num += 1
 
-        return self.fitness_score
+        return fitness_score
 
 
 def f1(**kwargs):

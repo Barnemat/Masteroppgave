@@ -79,9 +79,9 @@ class Objective1(Objective):
             # print('Measure fitness:', fitness_value)
 
         # Normalize somewhat with respect to the number of measures in music
-        self.fitness_score = round(fitness_value / len(measures), 4)
+        # self.fitness_score = round(fitness_value / len(measures), 4)
         # print('Total fitness value:', self.fitness_score)
-        return self.fitness_score
+        return round(fitness_value / len(measures), 4)
 
 
 def get_chord_pitches(measure):

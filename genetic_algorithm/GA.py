@@ -10,6 +10,7 @@ from genetic_algorithm.objectives.objective_3 import Objective3
 from syllable_handling.syllable_handling import SyllableDetector
 from genetic_algorithm.crossover import apply_crossover
 from genetic_algorithm.mutation import apply_mutation
+from genetic_algorithm.nds import NonDominatedSorter
 
 d = cmudict.dict()
 
@@ -66,14 +67,16 @@ class GA:
 
     def iterate(self):
         objective1 = Objective1()
-        print(objective1.get_total_fitness_value(self.population[0]))
-
         objective2 = Objective2()
-        print(objective2.get_total_fitness_value(self.population[0]))
+        objective3 = Objective3(self.syllable_detector.syllables, self.phonemes)
 
-        objective3 = Objective3()
-        objective3.get_total_fitness_value(self.population[0], self.syllable_detector.syllables, self.phonemes)
+        nds = NonDominatedSorter(self.population, [objective1, objective2, objective3])
+        nds.sort()
         '''
+        print(objective1.get_total_fitness_value(self.population[0]))
+        print(objective2.get_total_fitness_value(self.population[0]))
+        objective3.get_total_fitness_value(self.population[0])
+
         sorted(self.population, key=lambda x: objective1.get_total_fitness_value(x))
 
         best = self.population[:len(self.population) // 2]
