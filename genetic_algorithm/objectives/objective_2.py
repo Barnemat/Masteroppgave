@@ -28,8 +28,8 @@ class Objective2(Objective):
             self.target_values = target_values
         else:
             self.target_values = [
-                0.30, 0.60, 0.30, 0.05, 0.05, 0.70, 0.60, 0.30, 0.30, 0.10, 0.40,  # Rhythmic variety
-                0.80, 0.30, 0.60, 0.70, 0.30, 0.30, 0.20, 0.20, 0.10  # Semi-tone value (change with sentiment)
+                0.30, 0.50, 0.30, 0.05, 0.025, 0.70, 0.60, 0.30, 0.30, 0.10, 0.40,  # Rhythmic variety
+                0.80, 0.30, 0.50, 0.30, 0.30, 0.30, 0.20, 0.20, 0.10  # Semi-tone value (change with sentiment)
             ]
 
         '''
@@ -69,7 +69,7 @@ class Objective2(Objective):
         func_num = 0
         fitness_score = 0
         for func in self.fitness_functions:
-            print('fitness function:', func_num + 1)
+            # print('fitness function:', func_num + 1)
             fitness_score += self.compare_with_target_value(func(
                 melody=melody,
                 key=key,
@@ -81,7 +81,7 @@ class Objective2(Objective):
             ), func_num)
             # self.fitness_score += fitness_score
             fitness_score = round(fitness_score, 4)
-            print(fitness_score)
+            # print(fitness_score)
             func_num += 1
 
         return fitness_score
@@ -228,6 +228,7 @@ Interval Dissonance rating
 
 def f5(**kwargs):
     '''
+        # TODO: MUST USE SCALE
         Dissonant intervals - sum(dissonance rating of intervals) / num(intervals)
         Follows table above
     '''

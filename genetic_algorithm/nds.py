@@ -1,3 +1,4 @@
+from math import factorial, inf
 
 
 class NonDominatedSorter:
@@ -6,9 +7,10 @@ class NonDominatedSorter:
         Sorts by using a non-dominated sorting approach
     '''
 
-    def __init__(self, population, objectives):
+    def __init__(self, population, objectives, pop_size):
         self.population = population
         self.objectives = objectives
+        self.pop_size = pop_size
 
         self.fronts = []
         self.population_values = []
@@ -26,7 +28,7 @@ class NonDominatedSorter:
 
             self.population_values.append(values)
 
-    def sort(self):
+    def set_fronts(self):
         values = self.population_values
         len_values = len(values)
 
@@ -63,16 +65,73 @@ class NonDominatedSorter:
                 for dominated in d_list[index][1]:
                     d_list[dominated][0] -= 1
 
-        for front_index in range(len(self.fronts)):
-            print('Front: ', front_index + 1)
-            print(self.fronts[front_index])
-            print('')
+    def get_new_population(self):
+        self.set_fronts()
+
+        '''
+        In case of NSGAIII
+        p = 4  # num ref points for each objective plane
+        get_reference_points(p, len(self.objectives))
+        '''
+
+        new_population = []
+        last_front = []
+
+        for front in self.fronts:
+            if len(new_population) + len(front) > self.pop_size:
+                last_front.extend(front)
+                break
+            else:
+                new_population.extend(front)
+
+        if not len(new_population) == self.pop_size:
+            distances = self.get_crowding_distance(last_front)
+
+            while len(new_population) < self.pop_size:
+                max_distance = max(distances)
+                add_index = distances.index(max_distance)
+
+                new_population.append(last_front[add_index])
+                distances[add_index] = -inf
+
+        return [self.population[x] for x in new_population]
+
+    def get_crowding_distance(self, front):
+        distances = [0 for x in range(len(front))]
+        pop_values = self.population_values
+
+        for o_index in range(len(self.objectives)):
+            sorted_front = sorted(front, key=lambda x: pop_values[x][o_index])
+            sorted_dist_indices = [front.index(x) for x in sorted_front]
+
+            distances[sorted_dist_indices[0]] = inf
+            distances[sorted_dist_indices[-1]] = inf
+
+            for index in range(1, len(sorted_front) - 1):
+                if (pop_values[sorted_front[-1]][o_index] - pop_values[sorted_front[0]][o_index]) == 0:
+                    continue
+                distances[sorted_dist_indices[index]] = (
+                    distances[sorted_dist_indices[index]]
+                    + ((pop_values[sorted_front[index + 1]][o_index] - pop_values[sorted_front[index - 1]][o_index])
+                        / (pop_values[sorted_front[-1]][o_index] - pop_values[sorted_front[0]][o_index]))
+                )
+        return distances
 
     def index_is_in_front(self, index):
         for front in self.fronts:
             if index in front:
                 return True
         return False
+
+
+'''
+Needed only if upgrade from NSGAII to NSGAIII
+def get_reference_points(p, num_objectives):
+    points = []
+    num_points = combs(num_objectives + p - 1, p)
+    decrement = 1 / p
+    print(points)
+    '''
 
 
 def get_fronts_length(fronts):
@@ -82,3 +141,10 @@ def get_fronts_length(fronts):
         length += len(front)
 
     return length
+
+
+def combs(n, k):
+    try:
+        return factorial(n) // factorial(k) // factorial(n - k)
+    except ValueError:
+        return 0

@@ -7,6 +7,7 @@ from genetic_algorithm.GLOBAL import possible_notes, major, minor
 from genetic_algorithm.objectives.objective_1 import Objective1
 from genetic_algorithm.objectives.objective_2 import Objective2
 from genetic_algorithm.objectives.objective_3 import Objective3
+from genetic_algorithm.objectives.objective_4 import Objective4
 from syllable_handling.syllable_handling import SyllableDetector
 from genetic_algorithm.crossover import apply_crossover
 from genetic_algorithm.mutation import apply_mutation
@@ -29,6 +30,13 @@ class GA:
         self.set_possible_note_lengths()
         self.generate_population()
         self.phonemes = get_phonemes_from_syls(self.syllable_detector.syllables)
+
+        self.objectives = [
+            Objective1(),
+            Objective2(),
+            Objective3(self.syllable_detector.syllables, self.phonemes),
+            Objective4()
+        ]
 
     def set_possible_note_lengths(self):
         note_lengths = [1]
@@ -62,40 +70,30 @@ class GA:
         if not self.population:
             self.population = []
 
-        for _ in range(self.population_size):
+        for _ in range(self.population_size * 2):
             self.population.append(Phenotype(self.key, self.num_syllables, self.time_signature, self.note_lengths))
 
     def iterate(self):
-        objective1 = Objective1()
-        objective2 = Objective2()
-        objective3 = Objective3(self.syllable_detector.syllables, self.phonemes)
-
-        nds = NonDominatedSorter(self.population, [objective1, objective2, objective3])
-        nds.sort()
-        '''
-        print(objective1.get_total_fitness_value(self.population[0]))
-        print(objective2.get_total_fitness_value(self.population[0]))
-        objective3.get_total_fitness_value(self.population[0])
-
-        sorted(self.population, key=lambda x: objective1.get_total_fitness_value(x))
-
-        best = self.population[:len(self.population) // 2]
+        nds = NonDominatedSorter(self.population, self.objectives, self.population_size)
+        population = nds.get_new_population()
+        self.population = population
 
         new = []
-        for pheno_index in range(len(best)):
-            if pheno_index == len(best) - 1:
-                new.append(apply_crossover(best[pheno_index], best[0]))
+        for pheno_index in range(len(population)):
+            if pheno_index == len(population) - 1:
+                new.append(apply_crossover(population[pheno_index], population[0]))
                 break
 
-            new.append(apply_crossover(best[pheno_index], best[pheno_index + 1]))
+            new.append(apply_crossover(population[pheno_index], population[pheno_index + 1]))
 
-        self.population = self.population[:len(self.population) // 2]
         self.population.extend(new)
+
+        # TODO: REPLACE ABOVE CODE WITH TOURNAMENT SORT
 
         for phenotype in self.population:
             if randint(0, 100) <= 5:  # Chance of phenotype mutating
                 apply_mutation(phenotype)
-        '''
+
         # print(self.population[0].genes[0])
 
 

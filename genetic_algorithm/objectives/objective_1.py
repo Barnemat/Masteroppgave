@@ -28,7 +28,7 @@ class Objective1(Objective):
         time_signature = phenotype.time_signature
         scale = get_scale_notes(key)
 
-        beat_size = int(time_signature[0])
+        beat_size = int(time_signature[-1])  # TODO: Double check if this should be time_signature[0]
         measures = []
         index = 0
         while index < len(melody_beats) and index // beat_size < len(chord_beats):
@@ -52,9 +52,9 @@ class Objective1(Objective):
 
                 index += 1
 
-            chord = chord_beats[index % beat_size].replace('< ', '').split(' ')
-
-            measure[1].extend([x for x in chord if x.find('>') == -1])
+            chord = chord_beats[index % beat_size].replace('< ', '').replace('>', '').split(' ')
+            measure[1] = chord
+            # measure[1].extend([x for x in chord if x.find('>') == -1])
             measures.append(measure)
 
         fitness_value = 0

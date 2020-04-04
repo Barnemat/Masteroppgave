@@ -28,7 +28,7 @@ class Objective3(Objective):
         func_num = 1
         fitness_score = 0
         for func in self.fitness_functions:
-            print('fitness function:', func_num)
+            # print('fitness function:', func_num)
             fitness_score += func(
                 melody=melody,
                 phonemes=self.phonemes,
@@ -37,7 +37,7 @@ class Objective3(Objective):
 
             fitness_score = round(fitness_score, 4)
             # self.fitness_score += fitness_score
-            print(fitness_score)
+            # print(fitness_score)
             func_num += 1
 
         return fitness_score
@@ -62,13 +62,22 @@ def f1(**kwargs):
     for syl_index in range(len(syls)):
         word_notes = []
 
+        if len(notes) == 0:
+            break
+
         for index in range(len(syls[syl_index])):
             note = notes.pop(0)
 
             while not isinstance(note, list) and note.startswith('r'):
+                if len(notes) == 0:
+                    break
+                
                 note = notes.pop(0)
 
             word_notes.append(note)
+
+            if len(notes) == 0:
+                break
 
         phoneme = phonemes.pop(0)
 
