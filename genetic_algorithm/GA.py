@@ -1,11 +1,17 @@
+from nltk.corpus import cmudict
 from random import choice, randint
+
 from genetic_algorithm.GLOBAL import max_note_divisor
 from genetic_algorithm.phenotype import Phenotype
 from genetic_algorithm.GLOBAL import possible_notes, major, minor
 from genetic_algorithm.objectives.objective_1 import Objective1
+from genetic_algorithm.objectives.objective_2 import Objective2
+from genetic_algorithm.objectives.objective_3 import Objective3
+from genetic_algorithm.objectives.objective_4 import Objective4
 from syllable_handling.syllable_handling import SyllableDetector
-from genetic_algorithm.crossover import apply_crossover
-from genetic_algorithm.mutation import apply_mutation
+from genetic_algorithm.nds import NonDominatedSorter
+
+d = cmudict.dict()
 
 
 class GA:
@@ -21,6 +27,14 @@ class GA:
         self.generate_musical_key()
         self.set_possible_note_lengths()
         self.generate_population()
+        self.phonemes = get_phonemes_from_syls(self.syllable_detector.syllables)
+
+        self.objectives = [
+            Objective1(),
+            Objective2(),
+            Objective3(self.syllable_detector.syllables, self.phonemes),
+            Objective4()
+        ]
 
     def set_possible_note_lengths(self):
         note_lengths = [1]
@@ -54,30 +68,29 @@ class GA:
         if not self.population:
             self.population = []
 
-        for _ in range(self.population_size):
+        for _ in range(self.population_size * 2):
             self.population.append(Phenotype(self.key, self.num_syllables, self.time_signature, self.note_lengths))
 
     def iterate(self):
-        objective1 = Objective1()
-        sorted(self.population, key=lambda x: objective1.get_total_fitness_value(x))
+        nds = NonDominatedSorter(self.population, self.objectives, self.population_size)
+        self.population = nds.get_new_population()
 
-        best = self.population[:len(self.population) // 2]
-
+        '''
+        Old - before tournament selection
         new = []
-        for pheno_index in range(len(best)):
-            if pheno_index == len(best) - 1:
-                new.append(apply_crossover(best[pheno_index], best[0]))
+        for pheno_index in range(len(population)):
+            if pheno_index == len(population) - 1:
+                new.append(apply_crossover(population[pheno_index], population[0]))
                 break
 
-            new.append(apply_crossover(best[pheno_index], best[pheno_index + 1]))
+            new.append(apply_crossover(population[pheno_index], population[pheno_index + 1]))
 
-        self.population = self.population[:len(self.population) // 2]
         self.population.extend(new)
 
         for phenotype in self.population:
             if randint(0, 100) <= 5:  # Chance of phenotype mutating
                 apply_mutation(phenotype)
-        # print(self.population[0].genes[0])
+        '''
 
 
 def get_valid_min_key(note):
@@ -108,3 +121,27 @@ def get_valid_maj_key(note):
         return [note[-1] + 'es']
 
     return [note[choice([0, 2])]]
+
+
+def get_phonemes_from_syls(syllables):
+    syls = [y for x in syllables for y in x]
+
+    phonemes = []
+    for syl in syls:
+        word = ''.join(syl).lower()
+
+        if word not in d:
+            phonemes.append([])
+            continue
+
+        phoneme = d[word][0]
+
+        stress_values = [x[-1] for x in phoneme if x[-1].isnumeric()]
+
+        if len(stress_values) != len(syl):
+            phonemes.append([])
+            continue
+
+        phonemes.append(phoneme)
+
+    return phonemes
