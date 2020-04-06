@@ -1,4 +1,8 @@
 from math import factorial, inf
+from random import randint
+
+from genetic_algorithm.crossover import apply_crossover
+from genetic_algorithm.mutation import apply_mutation
 
 
 class NonDominatedSorter:
@@ -75,26 +79,74 @@ class NonDominatedSorter:
         '''
 
         new_population = []
+        new_fronts = []
         last_front = []
+        distances = []
 
         for front in self.fronts:
+            distances.append(self.get_crowding_distance(front))
+
             if len(new_population) + len(front) > self.pop_size:
                 last_front.extend(front)
                 break
             else:
                 new_population.extend(front)
+                new_fronts.append(front)
 
-        if not len(new_population) == self.pop_size:
-            distances = self.get_crowding_distance(last_front)
+        distance_fix = []
+        new_last_front = []
+        while len(new_population) < self.pop_size:
+            max_distance = max(distances[-1])
+            add_index = distances[-1].index(max_distance)
 
-            while len(new_population) < self.pop_size:
-                max_distance = max(distances)
-                add_index = distances.index(max_distance)
+            new_population.append(last_front[add_index])
+            new_last_front.append(last_front[add_index])
 
-                new_population.append(last_front[add_index])
-                distances[add_index] = -inf
+            distance_fix.append([add_index, distances[-1][add_index]])
+            distances[-1][add_index] = -inf
 
-        return [self.population[x] for x in new_population]
+        new_fronts.append(new_last_front)
+
+        for distance in distance_fix:  # Sets distances to previous distances
+            distances[-1][distance[0]] = distance[1]
+
+        new_population = [self.population[x] for x in new_population]
+
+        # Tournament selection for crossover
+        for _ in range(len(new_population)):
+            crossover = []
+
+            for _ in range(2):
+                try:
+                    front_1 = randint(0, len(new_fronts) - 1)
+                    front_2 = randint(0, len(new_fronts) - 1)
+                except ValueError:
+                    front_1, front_2 = 0, 0
+
+                if front_1 == front_2:
+                    try:
+                        index_1 = randint(0, len(new_fronts[front_1]) - 1)
+                        index_2 = randint(0, len(new_fronts[front_1]) - 1)
+                    except ValueError:
+                        index_1, index_2 = 0, 0
+
+                    if distances[front_1][index_1] > distances[front_1][index_2]:
+                        crossover.append(new_fronts[front_1][index_1])
+                    else:
+                        crossover.append(new_fronts[front_1][index_2])
+                else:
+                    index = min([front_1, front_2])
+                    crossover.append(new_fronts[index][randint(0, len(new_fronts[index]) - 1)])
+
+            new_population.append(apply_crossover(self.population[crossover[0]], self.population[crossover[1]]))
+
+        # Mutation and mutation probabilitiy
+        for phenotype in new_population:
+            if randint(0, 100) <= 5:  # Chance of phenotype mutating
+                apply_mutation(phenotype)
+
+        self.population = new_population
+        return self.population
 
     def get_crowding_distance(self, front):
         distances = [0 for x in range(len(front))]

@@ -9,8 +9,6 @@ from genetic_algorithm.objectives.objective_2 import Objective2
 from genetic_algorithm.objectives.objective_3 import Objective3
 from genetic_algorithm.objectives.objective_4 import Objective4
 from syllable_handling.syllable_handling import SyllableDetector
-from genetic_algorithm.crossover import apply_crossover
-from genetic_algorithm.mutation import apply_mutation
 from genetic_algorithm.nds import NonDominatedSorter
 
 d = cmudict.dict()
@@ -75,9 +73,10 @@ class GA:
 
     def iterate(self):
         nds = NonDominatedSorter(self.population, self.objectives, self.population_size)
-        population = nds.get_new_population()
-        self.population = population
+        self.population = nds.get_new_population()
 
+        '''
+        Old - before tournament selection
         new = []
         for pheno_index in range(len(population)):
             if pheno_index == len(population) - 1:
@@ -88,13 +87,10 @@ class GA:
 
         self.population.extend(new)
 
-        # TODO: REPLACE ABOVE CODE WITH TOURNAMENT SORT
-
         for phenotype in self.population:
             if randint(0, 100) <= 5:  # Chance of phenotype mutating
                 apply_mutation(phenotype)
-
-        # print(self.population[0].genes[0])
+        '''
 
 
 def get_valid_min_key(note):
