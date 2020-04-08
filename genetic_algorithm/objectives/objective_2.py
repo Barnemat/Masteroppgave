@@ -21,15 +21,15 @@ class Objective2(Objective):
 
         self.fitness_functions.extend([
             f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19,
-            f20
+            f20, f21, f22
         ])
 
         if target_values:
             self.target_values = target_values
         else:
             self.target_values = [
-                0.30, 0.50, 0.30, 0.05, 0.025, 0.70, 0.60, 0.30, 0.30, 0.10, 0.40,  # Rhythmic variety
-                0.80, 0.30, 0.50, 0.30, 0.30, 0.30, 0.20, 0.20, 0.10  # Semi-tone value (change with sentiment)
+                0.30, 0.50, 0.35, 0.05, 0.10, 0.70, 0.60, 0.40, 0.30, 0.10, 0.40,  # Rhythmic variety
+                0.80, 0.30, 0.50, 0.40, 0.30, 0.30, 0.20, 0.20, 0.20, 0.20, 0.20
             ]
 
         '''
@@ -204,7 +204,7 @@ def f4(**kwargs):
         Non-scale notes - num(pitch not in scale quanta) / quanta
     '''
     notes = [note for note in kwargs['notes']]
-    notes_no_timing = [remove_note_octave(remove_note_timing(note)) for note in notes]
+    notes_no_timing = [remove_note_octave(remove_note_timing(note)) for note in notes if note != 'r']
     scale = kwargs['scale']
     quanta = kwargs['quanta']
 
@@ -526,3 +526,36 @@ def f20(**kwargs):
             semitone_steps += 1
 
     return round(semitone_steps / len(intervals), 4)
+
+
+def f21(**kwargs):
+    '''
+        Number of 16th notes - num(16th notes) / num(notes)
+        Excessive number of 16th notes might negatively affect melody flow
+    '''
+    notes = kwargs['notes']
+    count = 0
+
+    for note in notes:
+        if get_note_timing(note) == '16':
+            count += 1
+
+    return count / len(notes)
+
+
+def f22(**kwargs):
+    '''
+        Number of whole or dotted whole notes - num(whole (+ dotted whole) notes) / num(notes)
+        Excessive number of whole notes might negatively affect melody flow
+    '''
+    notes = kwargs['notes']
+    count = 0
+
+    for note in notes:
+        timing = get_note_timing(note)
+        if timing == '1' or timing == '1.':
+            count += 1
+
+    return count / len(notes)
+
+# TODO: Perhaps punish repeated 16th notes, and especially repeated whole notes

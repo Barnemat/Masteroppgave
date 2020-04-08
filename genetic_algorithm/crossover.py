@@ -3,8 +3,9 @@
 '''
 from genetic_algorithm.phenotype import Phenotype
 from random import randint, choice
-from math import ceil
+from math import ceil, floor
 from copy import deepcopy
+from genetic_algorithm.GLOBAL import get_note_timing, accurate_beat_counter
 
 
 def get_num_syls_in_melody(melody):
@@ -41,6 +42,15 @@ def clean_melody(melody, num_syls):
         del new_melody[-1][-1]
 
     return new_melody
+
+
+def add_beats_for_dot_notes(melody):
+    beats_to_add = accurate_beat_counter(melody)
+    while beats_to_add > 0:
+        melody.insert(randint(0, len(melody) - 1), [])
+        beats_to_add -= 1
+
+    return melody
 
 
 def get_melody_cut(melody, num_beats_cut):
@@ -90,7 +100,7 @@ def get_melody_cut(melody, num_beats_cut):
         while len(melody) > 0 and len(melody[0]) == 0:
             melody.pop(0)
 
-    return cut
+    return add_beats_for_dot_notes(cut)
 
 
 def get_chord_cut(chords, num_chords, num_beats, time_signature):
@@ -142,10 +152,12 @@ def crossover_random_beats(p1, p2):
         melody_genes.extend(melody_cut)
 
         chord_copy = [] if len(current_chords) > 0 else current_pheno.genes[1][:]
+        len_melody = accurate_beat_counter(melody_genes)
+
         chord_cut = get_chord_cut(
             current_chords if len(current_chords) > 0 else [choice(chord_copy)],
             len(chord_genes),
-            len(melody_genes),
+            len_melody,
             time_signature
         )
 
@@ -166,7 +178,7 @@ def crossover_random_beats(p1, p2):
         note_count = get_num_syls_in_melody(melody_genes)
         if note_count >= num_syls:
             melody_genes = clean_melody(melody_genes, num_syls)
-            chord_genes = clean_chords(chord_genes, int(len(melody_genes) / time_signature))
+            chord_genes = clean_chords(chord_genes, accurate_beat_counter(melody_genes) / time_signature)
             break
 
         current_pheno = p1 if current_pheno == p2 else p2

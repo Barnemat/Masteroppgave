@@ -1,5 +1,11 @@
 from genetic_algorithm.objectives.objective import Objective
-from genetic_algorithm.GLOBAL import get_scale_notes, remove_note_timing, remove_note_octave, get_note_distance
+from genetic_algorithm.GLOBAL import (
+    get_scale_notes,
+    remove_note_timing,
+    remove_note_octave,
+    get_note_distance,
+    get_triad_distances
+)
 
 
 class Objective4(Objective):
@@ -12,7 +18,7 @@ class Objective4(Objective):
         super().__init__()
 
         self.fitness_functions.extend([
-            f1
+            f1, f2, f3
         ])
 
     def get_total_fitness_value(self, phenotype):
@@ -57,3 +63,51 @@ def f1(**kwargs):
     if not remove_note_octave(chord[0]) in scale:
         return -50
     return 1
+
+
+def f2(**kwargs):
+    '''
+        Punish chord not following set scale degrees
+        https://en.wikipedia.org/wiki/Major_scale#Triad_qualities
+        = -30 fitness score
+    '''
+
+    chord = kwargs['chord'][:-1]
+    key = kwargs['key']
+    scale = kwargs['scale']
+    root = remove_note_octave(chord[0])
+
+    if root in scale:
+        index = scale.index(root)
+        distances = get_triad_distances(index, key)
+
+        for i in range(len(chord)):
+            if i == 3:
+                break
+
+            if not get_note_distance(chord[0], chord[i]) == distances[i]:
+                return -30
+    return 0
+
+
+def f3(**kwargs):
+    '''
+        Punish semi-tone dissonace in flavor note
+        = -20 fitness score
+    '''
+    chord = kwargs['chord'][:-1]
+
+    if len(chord) == 3:
+        return 0
+
+    last_note = chord[-1]
+
+    for i in range(len(chord)):
+        if get_note_distance(chord[i], last_note) == 1:
+            return -20
+    return 0
+
+
+'''
+    # TODO: Maybe make 7th chords more desireable than e.g. aug 6th etc.
+'''

@@ -12,7 +12,7 @@ class Objective1(Objective):
         super().__init__()
 
         self.fitness_functions.extend([
-            f1, f2, f3, f4, f5, f6, f7, f8, f9
+            f1, f2, f3, f4, f5, f6, f7, f8
         ])
 
     def get_total_fitness_value(self, phenotype):
@@ -208,9 +208,9 @@ def f2(**kwargs):
     '''
         a melody where many notes that resolve in chords does not appear in key is not good
         ornament_notes <= scale_pitches
-        = +1 fitness (combined a three functions from Olseng, Should maybe up number to +3 to account for that)
+        = +1 fitness (combined three functions from Olseng, Should maybe up number to +3 to account for that)
     '''
-    return 1 if len(kwargs['ornament_notes']) <= len(kwargs['scale_pitches']) else 0
+    return 3 if len(kwargs['ornament_notes']) <= len(kwargs['scale_pitches']) else 0
 
 
 def f3(**kwargs):
@@ -304,12 +304,5 @@ def f7(**kwargs):
 def f8(**kwargs):
     '''
         # TODO: Decide if augmented 9th is actually that bad
-    '''
-    return 0
-
-
-def f9(**kwargs):
-    '''
-        # TODO: Decide if local melody and text fitness should be here or other objective
     '''
     return 0

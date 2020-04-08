@@ -105,7 +105,8 @@ class NonDominatedSorter:
             distance_fix.append([add_index, distances[-1][add_index]])
             distances[-1][add_index] = -inf
 
-        new_fronts.append(new_last_front)
+        if len(new_last_front) > 0:
+            new_fronts.append(new_last_front)
 
         for distance in distance_fix:  # Sets distances to previous distances
             distances[-1][distance[0]] = distance[1]
@@ -133,7 +134,7 @@ class NonDominatedSorter:
                     if distances[front_1][index_1] > distances[front_1][index_2]:
                         crossover.append(new_fronts[front_1][index_1])
                     else:
-                        crossover.append(new_fronts[front_1][index_2])
+                        crossover.append(new_fronts[front_1][index_2])  # Error!!
                 else:
                     index = min([front_1, front_2])
                     crossover.append(new_fronts[index][randint(0, len(new_fronts[index]) - 1)])

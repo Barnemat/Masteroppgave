@@ -9,8 +9,8 @@ if __name__ == '__main__':
     # lyrics = [Lyric(texts[title]) for title in texts]
     lyric = Lyric(texts['nj-v12'])
 
-    population_size = 500
-    num_generations = 500
+    population_size = 100
+    num_generations = 1
 
     ga = GA(population_size, lyric)
 
@@ -20,4 +20,4 @@ if __name__ == '__main__':
 
     for phenotype in ga.population[:len(ga.population) // (len(ga.population) // 2)]:
         file_generator = LilyPondFileGenerator(phenotype.genes, ga.key, ga.time_signature, lyric.get_syllables())
-        file_generator.generate_file(os.getcwd() + '/output/outfiles/mutation/')
+        file_generator.generate_file(os.getcwd() + '/output/outfiles/semi-done/')
