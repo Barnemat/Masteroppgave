@@ -1,10 +1,14 @@
+from math import ceil
 from genetic_algorithm.objectives.objective import Objective
 from genetic_algorithm.GLOBAL import (
     get_note_timing,
     get_scale_notes,
     get_triad_distances,
     remove_note_octave,
-    get_note_distance
+    get_note_distance,
+    get_all_notes,
+    get_note_dec_timing,
+    remove_note_timing
 )
 
 
@@ -15,15 +19,25 @@ class Objective3(Objective):
         I.e. it's a song making objective
     '''
 
-    def __init__(self, syllables, phonemes):
+    def __init__(self, syllables, phonemes, target_values=None):
         super().__init__()
 
         self.fitness_functions.extend([
-            f1, f2
+            f1, f2, f3, f4, f5, f6, f7, f8
         ])
+
+        if target_values:
+            self.target_values = target_values
+        else:
+            self.target_values = [
+                1.00, 1.00, 0.35, 1.00, 1.00, 1.00, 0.60, 0.35
+            ]
 
         self.syllables = syllables
         self.phonemes = phonemes
+
+    def compare_with_target_value(self, value, target_index):
+        return 1 - abs(value - self.target_values[target_index])
 
     def get_total_fitness_value(self, phenotype):
         '''
@@ -33,27 +47,32 @@ class Objective3(Objective):
         key = phenotype.key
         time_signature = phenotype.time_signature
         scale = get_scale_notes(key)
+        measures = get_measures_from_melody(melody, time_signature)
+        line_ending_indices = get_line_ending_indices(self.syllables)
+        all_notes = get_all_notes(melody)
 
-        func_num = 1
+        func_num = 0
         fitness_score = 0
         for func in self.fitness_functions:
-            # print('fitness function:', func_num)
-            fitness_score += func(
+            # print('fitness function:', func_num + 1)
+            fitness_score += self.compare_with_target_value(func(
                 melody=melody,
                 chords=chords,
                 time_signature=time_signature,
                 scale=scale,
                 key=key,
                 phonemes=self.phonemes,
-                syllables=self.syllables
-            )
+                syllables=self.syllables,
+                measures=measures,
+                line_ending_indices=line_ending_indices,
+                all_notes=all_notes
+            ), func_num)
 
-            fitness_score = round(fitness_score, 4)
+            func_num += 1
             # self.fitness_score += fitness_score
             # print(fitness_score)
-            func_num += 1
 
-        return fitness_score
+        return round(fitness_score, 4)
 
 
 def f1(**kwargs):
@@ -224,6 +243,7 @@ def f4(**kwargs):
     '''
         Dominant should resolve in tonic within two measures
         num(resolving dominant chords) / num(dominant chords)
+        # TODO: Find out if functions should be moved to other objective
     '''
 
     chords = [chord[:-1] for chord in kwargs['chords']]
@@ -252,14 +272,104 @@ def f4(**kwargs):
                 if tonic_dom_list.pop(0) == 't':
                     res_doms += 1
                     break
+    # Maybe change default to 0.5, to set it between worst/best
+    return res_doms / doms if doms > 0 else 1.0
 
-    return res_doms / doms
+
+def f5(**kwargs):
+    '''
+        Returns number of line endings also ending a measure (ending + rest is also ending)
+        num(lines ends measure) / num(lines)
+    '''
+    measures = kwargs['measures']
+    line_ending_indices = kwargs['line_ending_indices']
+
+    num_ends_measure = 0
+    note_total_index = 0
+    for measure in measures:
+        for beat_index in range(len(measure)):
+            for note_index in range(len(measure[beat_index])):
+                if note_total_index in line_ending_indices:
+                    if (beat_index == len(measure) - 1 and note_index == len(measure[beat_index]) - 1):
+                        num_ends_measure += 1
+                note_total_index += 1
+
+    return num_ends_measure / len(line_ending_indices)
 
 
-# TODO: High number of line endings also ending a measure (ending + rest is also ending)
-# TODO: High number of line endings ending on longer duration notes
-# TODO: Many line endings ending on tonic
-# TODO: Not too many repeated chords
+def f6(**kwargs):
+    '''
+        Number of line endings ending on note with longer duration than previous
+        num(notes w. note durations > prev note) / lines
+    '''
+    melody = kwargs['melody']
+    line_ending_indices = kwargs['line_ending_indices']
+
+    count = 0
+    total_note_count = 0
+    for beat_i in range(len(melody)):
+        for note_i in melody[beat_i]:
+            if total_note_count in line_ending_indices:
+                note = melody[beat_i][note_i]
+                if isinstance(note, list):
+                    if len(note) > 1 and get_note_dec_timing(note[-2]) < get_note_dec_timing(note[-1]):
+                        count += 1
+                elif note_i == 0:
+                    if beat_i > 0 and len(melody[beat_i - 1][-1]) > 0 and len(melody[beat_i][note_i]) > 0:
+                        if get_note_dec_timing(melody[beat_i - 1][-1]) < get_note_dec_timing(melody[beat_i][note_i]):
+                            count += 1
+                elif len(melody[beat_i][-1]) > 0 and len(melody[beat_i][note_i]) > 0:
+                    count += 1
+                total_note_count += 1
+
+    return count / len(line_ending_indices)
+
+
+def f7(**kwargs):
+    '''
+        Number of line endings ending on tonic
+        num(tonic ending lines) / lines
+    '''
+    line_ending_indices = kwargs['line_ending_indices']
+    tonic = kwargs['scale'][0]
+    melody = kwargs['melody']
+
+    count = 0
+    total_note_count = 0
+    for beat_i in range(len(melody)):
+        for note_i in range(len(melody[beat_i])):
+            if total_note_count in line_ending_indices:
+                note = melody[beat_i][note_i]
+
+                if isinstance(note, list):
+                    if remove_note_octave(remove_note_timing(melody[beat_i][note_i][-1])) == tonic:
+                        count += 1
+                elif remove_note_octave(remove_note_timing(melody[beat_i][note_i])) == tonic:
+                    count += 1
+
+            total_note_count += 1
+
+    return count / len(line_ending_indices)
+
+
+def f8(**kwargs):
+    '''
+        Number of repeated chords
+        num(chord_intervals with same chords) / chord_intervals
+    '''
+    chords = kwargs['chords']
+
+    intervals = []
+
+    for i in range(1, len(chords)):
+        intervals.append([chords[i - 1], chords[i]])
+
+    count = 0
+    for interval in intervals:
+        if interval[0] == interval[1]:
+            count += 1
+
+    return count / len(intervals)
 
 
 def is_correct_triad(chord, key, index):
@@ -274,3 +384,38 @@ def is_correct_triad(chord, key, index):
             return False
 
     return True
+
+
+def get_num_syls_in_line(line):
+    count = 0
+    for word in line:
+        for syl in word:
+            count += 1
+    return count
+
+
+def get_measures_from_melody(mel, time_signature):
+    melody = mel.copy()
+    measures = []
+
+    for _ in range(int(ceil(len(melody) // int(time_signature[0])))):
+        measure = []
+
+        for _ in range(int(time_signature[0])):
+            measure.append(melody.pop(0))
+
+        measures.append(measure)
+
+    return measures
+
+
+def get_line_ending_indices(lines):
+    line_ending_indices = []
+    index = 0
+
+    for line in lines:
+        syls = get_num_syls_in_line(line)
+        index += syls
+        line_ending_indices.append(index)
+
+    return line_ending_indices

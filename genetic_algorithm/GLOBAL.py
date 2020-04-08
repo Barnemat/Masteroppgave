@@ -143,6 +143,17 @@ def get_note_timing(note):
     return note + dotted
 
 
+def get_note_dec_timing(note):
+    timing = get_note_timing(note)
+
+    if timing.endswith('.'):
+        timing = int(timing[:-1]) + (int(timing[:-1]) * 2)
+    else:
+        timing = int(timing)
+
+    return 4 / timing
+
+
 def remove_note_octave(note):
     return ''.join([char for char in note if char.isalpha() or char.isnumeric()])
 
@@ -189,7 +200,7 @@ def beat_count(note):
     dotted = timing.endswith('.')
 
     if dotted:
-        timing = int(timing[:len(timing) - 1])
+        timing = int(timing[:-1])
         timing += timing // 2
     else:
         timing = int(timing)
@@ -209,3 +220,17 @@ def accurate_beat_counter(melody):
                 count += beat_count(note)
 
     return int(ceil(count))
+
+
+def get_all_notes(melody):
+    notes = []
+
+    for beat in melody:
+        for note in beat:
+            if isinstance(note, list):
+                for mel_note in note:
+                    notes.append(mel_note)
+            else:
+                notes.append(note)
+
+    return notes

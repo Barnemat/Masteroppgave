@@ -9,8 +9,8 @@ if __name__ == '__main__':
     # lyrics = [Lyric(texts[title]) for title in texts]
     lyric = Lyric(texts['nj-v12'])
 
-    population_size = 100
-    num_generations = 1
+    population_size = 800
+    num_generations = 500
 
     ga = GA(population_size, lyric)
 

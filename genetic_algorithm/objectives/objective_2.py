@@ -29,7 +29,7 @@ class Objective2(Objective):
         else:
             self.target_values = [
                 0.30, 0.50, 0.35, 0.05, 0.10, 0.70, 0.60, 0.40, 0.30, 0.10, 0.40,  # Rhythmic variety
-                0.80, 0.30, 0.50, 0.40, 0.30, 0.30, 0.20, 0.20, 0.20, 0.20, 0.20
+                0.80, 0.30, 0.50, 0.40, 0.20, 0.30, 0.10, 0.20, 0.20, 0.10, 0.10
             ]
 
         '''
@@ -80,11 +80,10 @@ class Objective2(Objective):
                 quanta=quanta
             ), func_num)
             # self.fitness_score += fitness_score
-            fitness_score = round(fitness_score, 4)
             # print(fitness_score)
             func_num += 1
 
-        return fitness_score
+        return round(fitness_score, 4)
 
     def compare_with_target_value(self, value, target_index):
         return 1 - abs(value - self.target_values[target_index])

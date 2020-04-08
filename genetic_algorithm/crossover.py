@@ -23,7 +23,7 @@ def get_num_syls_in_melody(melody):
 
 
 def clean_chords(chords, max_chords):
-    while len(chords) > max_chords:
+    while len(chords) > max_chords + 1:
         chords.pop()
     return chords
 
