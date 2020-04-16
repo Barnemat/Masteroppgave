@@ -80,13 +80,13 @@ def get_triad_distances(index, key):
     chord = scale_chords[index]
 
     if chord == 'min':
-        return min_triad_distances
+        return [min_triad_distances, 'min']
     elif chord == 'dim':
-        return dim_distances
+        return [dim_distances, 'min']
     elif chord == 'maj_aug':
-        return maj_aug
+        return [maj_aug, 'maj']
     else:
-        return maj_triad_distances
+        return [maj_triad_distances, 'maj']
 
 
 # Should be pregerenerated if time

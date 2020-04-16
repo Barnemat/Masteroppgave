@@ -134,7 +134,7 @@ class NonDominatedSorter:
                     if distances[front_1][index_1] > distances[front_1][index_2]:
                         crossover.append(new_fronts[front_1][index_1])
                     else:
-                        crossover.append(new_fronts[front_1][index_2])  # Error!!
+                        crossover.append(new_fronts[front_1][index_2])
                 else:
                     index = min([front_1, front_2])
                     crossover.append(new_fronts[index][randint(0, len(new_fronts[index]) - 1)])
@@ -143,7 +143,7 @@ class NonDominatedSorter:
 
         # Mutation and mutation probabilitiy
         for phenotype in new_population:
-            if randint(0, 100) <= 5:  # Chance of phenotype mutating
+            if randint(0, 100) <= 20:  # Chance of phenotype mutating
                 apply_mutation(phenotype)
 
         self.population = new_population

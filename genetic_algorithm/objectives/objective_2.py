@@ -21,15 +21,15 @@ class Objective2(Objective):
 
         self.fitness_functions.extend([
             f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19,
-            f20, f21, f22
+            f20, f21, f22, f23
         ])
 
         if target_values:
             self.target_values = target_values
         else:
             self.target_values = [
-                0.30, 0.50, 0.35, 0.05, 0.10, 0.70, 0.60, 0.40, 0.30, 0.10, 0.40,  # Rhythmic variety
-                0.80, 0.30, 0.50, 0.40, 0.20, 0.30, 0.10, 0.20, 0.20, 0.10, 0.10
+                0.30, 0.35, 0.35, 0.00, 0.10, 0.60, 0.50, 0.30, 0.30, 0.10, 0.40,  # Rhythmic variety
+                0.80, 0.20, 0.50, 0.40, 0.20, 0.20, 0.10, 0.10, 0.20, 0.10, 0.10, 0.00
             ]
 
         '''
@@ -148,8 +148,7 @@ def f1(**kwargs):
         Pitch variety - num(distinct pitches) / num(notes)
     '''
     notes = kwargs['notes']
-    pitches = [remove_note_octave(remove_note_timing(x)) for x in notes]
-    distinct_notes = list(set([x for x in pitches]))
+    distinct_notes = list(set([remove_note_octave(remove_note_timing(x)) for x in notes]))
 
     return round(len(distinct_notes) / len(notes), 4)
 
@@ -173,7 +172,7 @@ def f2(**kwargs):
         if not note == 'r' and note_index > max_index:
             max_index = note_index
 
-    if max_index - min_index > note_range:
+    if max_index - min_index > note_range:  # Max value if note range is exceeded
         return 1.0
 
     return round((max_index - min_index) / note_range, 4)
@@ -227,7 +226,7 @@ Interval Dissonance rating
 
 def f5(**kwargs):
     '''
-        # TODO: MUST USE SCALE
+        # TODO: MUST (?) USE SCALE
         Dissonant intervals - sum(dissonance rating of intervals) / num(intervals)
         Follows table above
     '''
@@ -539,7 +538,7 @@ def f21(**kwargs):
         if get_note_timing(note) == '16':
             count += 1
 
-    return count / len(notes)
+    return round(count / len(notes), 4)
 
 
 def f22(**kwargs):
@@ -555,6 +554,26 @@ def f22(**kwargs):
         if timing == '1' or timing == '1.':
             count += 1
 
-    return count / len(notes)
+    return round(count / len(notes), 4)
+
+
+def f23(**kwargs):
+    '''
+        Repeated pitches in patterns of 4
+        More rigorous testing for repeated pitches - looks three steps forward
+    '''
+    notes = kwargs['notes']
+
+    repeated_patterns = 0
+    for index in range(len(notes) - 3):
+        for inner_index in range(index, index + 4):
+            if not notes[index] == notes[inner_index]:
+                break
+
+            if inner_index == index + 3:
+                repeated_patterns += 1
+
+    return round(repeated_patterns / (len(notes) - 3), 4)
+
 
 # TODO: Perhaps punish repeated 16th notes, and especially repeated whole notes

@@ -128,13 +128,18 @@ class Phenotype:
             for x in range(1, randint(3, 4)):  # Allows for chords with 3 or 4 notes
                 if x == 3:
                     tries = 20
-                    while tries > 0 and (note in notes or get_note_abs_index(note) < note_abs_index):
+                    note = self.get_random_note(0, True)[:-1]
+                    while (tries > 0 and (note in notes or get_note_abs_index(note) <= get_note_abs_index(notes[-1]))):
                         note = self.get_random_note(0, True)[:-1]
                         tries -= 1
+
+                    if tries == 0:
+                        break
                 else:
                     note = absolute_note_list[note_abs_index + triad[x]]
                     if isinstance(note, list):
-                        sharps_flats = get_key_sharps_flats(self.key)
+                        maj_min = 'maj' if triad == triads[0] or triad == triads[3] else 'min'
+                        sharps_flats = get_key_sharps_flats([notes[0], maj_min])
                         if sharps_flats == 'es':
                             note = note[0]
                         else:

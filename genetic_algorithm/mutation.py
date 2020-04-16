@@ -293,22 +293,34 @@ def mutate_extra_note_in_chord(phenotype):
         # TODO: Choose whether the note should be random (but from scale) or chosen by rules
     '''
     chords = phenotype.genes[1].copy()
+    chord_index = randint(0, len(chords) - 1)
+    chord = chords[chord_index].replace('< ', '').replace('>', '').split(' ')
+    root_key = [chord[0], choice(['maj', 'min'])]
+    timing = chord[-1]
+    chord = chord[:-1]
 
-    if len(chords) == 4:
-        chords = chords[:3]
+    if len(chord) == 4:
+        chord = chord[:3]
 
-    last_note = chords[-1]  # For resolving distance issues
-    new_note = get_random_scale_note(phenotype.key, '', True)
+    last_note = chord[-1]  # For resolving distance issues
+    new_note = get_random_scale_note(root_key, '', True)
 
     tries = 20
     while tries > 0 and get_note_abs_index(new_note) <= get_note_abs_index(last_note):
-        new_note = get_random_scale_note(phenotype.key, '', True)
+        new_note = get_random_scale_note(root_key, '', True)
         tries -= 1
 
     if tries <= 0:
         return
 
-    phenotype.genes[1] = chords
+    chord.append(new_note)
+
+    new_chord = '< '
+
+    for element in chord:
+        new_chord += element + ' '
+
+    phenotype.genes[1][chord_index] = new_chord + '>' + timing
 
 
 def switch_random_chords(phenotype):
@@ -347,8 +359,8 @@ def apply_mutation(phenotype):
     scale_note = 35
     timing_in_beat = 45
     divide_note = 50
-    switch_notes = 65
-    random_chord = 70
+    switch_notes = 60
+    random_chord = 65
     random_scale_note_chord = 85
     switch_chords = 95
     extra_note_chord = 100

@@ -4,7 +4,8 @@ from genetic_algorithm.GLOBAL import (
     remove_note_timing,
     remove_note_octave,
     get_note_distance,
-    get_triad_distances
+    get_triad_distances,
+    get_note_abs_index
 )
 
 
@@ -18,7 +19,7 @@ class Objective4(Objective):
         super().__init__()
 
         self.fitness_functions.extend([
-            f1, f2, f3
+            f1, f2, f3, f4
         ])
 
     def get_total_fitness_value(self, phenotype):
@@ -48,27 +49,29 @@ class Objective4(Objective):
         # self.fitness_score = round(fitness_value / len(measures), 4)
         # print('Total fitness value:', self.fitness_score)
         if fitness_value == 0:
-            return 1
+            return 0
+
         return round(fitness_value / len(chords), 4)
 
 
 def f1(**kwargs):
     '''
         Heavily punish chord roots not in key
-        = -50 fitness score
+        = -30 fitness score (lowered, as it's also punished in f2)
     '''
     chord = kwargs['chord']
     scale = kwargs['scale']
 
     if not remove_note_octave(chord[0]) in scale:
         return -50
-    return 1
+    return 0
 
 
 def f2(**kwargs):
     '''
         Punish chord not following set scale degrees
         https://en.wikipedia.org/wiki/Major_scale#Triad_qualities
+        https://en.wikipedia.org/wiki/Minor_scale
         = -30 fitness score
     '''
 
@@ -80,13 +83,20 @@ def f2(**kwargs):
     if root in scale:
         index = scale.index(root)
         distances = get_triad_distances(index, key)
+        root_scale = get_scale_notes([root, distances[1]])
 
         for i in range(len(chord)):
             if i == 3:
                 break
 
-            if not get_note_distance(chord[0], chord[i]) == distances[i]:
+            chord_note_no_oct = remove_note_octave(chord[i])
+
+            if (chord_note_no_oct not in root_scale
+                    or not get_note_distance(chord[0], chord[i]) == distances[0][i]):
                 return -30
+    else:
+        return -30
+
     return 0
 
 
@@ -105,6 +115,20 @@ def f3(**kwargs):
     for i in range(len(chord)):
         if get_note_distance(chord[i], last_note) == 1:
             return -20
+    return 0
+
+
+def f4(**kwargs):
+    '''
+        Punish root note higher than middle c
+        = -20 fitness score
+        Done to make it less likely that chord interferes with melody line
+    '''
+    root = kwargs['chord'][0]
+
+    if get_note_abs_index(root) > get_note_abs_index('c'):
+        return -20
+
     return 0
 
 
