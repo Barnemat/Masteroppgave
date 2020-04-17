@@ -29,14 +29,14 @@ class Objective3(Objective):
         ])
 
         self.harmonic_punishment_functions = [
-            f13, f14
+            hf1, hf2
         ]
 
         if target_values:
             self.target_values = target_values
         else:
             self.target_values = [
-                1.00, 1.00, 0.35, 1.00, 1.00, 1.00, 0.60, 0.30, 0.70, 0.60, 0.40, 0.50
+                1.00, 1.00, 0.35, 1.00, 1.00, 1.00, 0.60, 0.30, 0.70, 0.60, 0.40, 0.50, 0.35, 0.00
             ]
 
         self.syllables = syllables
@@ -215,6 +215,9 @@ def f2(**kwargs):
 
     points = 0.0
     for chord in first_last:
+        if remove_note_octave(chord[0]) != scale[0]:
+            continue
+
         chord_points = 0.5
         for index in range(len(chord)):
             if index == 3:  # Ignore flavor note in triad
@@ -467,6 +470,45 @@ def f12(**kwargs):
     return round(len(distinct_chords) / len(chords), 4)
 
 
+def f13(**kwargs):
+    '''
+        Returns the portion of chords with a 4th flavor note
+        num(chords with 4th note) / num(chords)
+    '''
+    return len([chord for chord in kwargs['chords'] if len(chord[:-1]) == 4]) / len(kwargs['chords'])
+
+
+def f14(**kwargs):
+    '''
+        Returns chord progression starting/ending with dominant triads
+        Starts = 0.5, ends = 0.5, 0.0, otherwise
+    '''
+    chords = kwargs['chords']
+    key = kwargs['key']
+    scale = get_scale_notes([kwargs['scale'][4], 'maj'])
+
+    first_last = [chords[0][:-1], chords[-1][:-1]]
+    distances = get_triad_distances(4, key)[0]
+
+    points = 0.0
+    for chord in first_last:
+        if remove_note_octave(chord[0]) != scale[0]:
+            continue
+
+        chord_points = 0.5
+        for index in range(len(chord)):
+            if index == 3:  # Ignore flavor note in triad
+                break
+
+            if (remove_note_octave(chord[index]) not in scale
+                    or not get_note_distance(chord[0], chord[index]) == distances[index]):
+                chord_points = 0.0
+                break
+        points += chord_points
+
+    return points
+
+
 '''
 def f13(**kwargs):
         # TODO: IMPLEMENT LATER IF NEEDED
@@ -482,7 +524,7 @@ HARMONIC PUNISHMENT
 '''
 
 
-def f13(fitness_value, **kwargs):
+def hf1(fitness_value, **kwargs):
     '''
         If not at least a 0.33 of chords contains tonic triads
         Return fitness_value / 2
@@ -496,7 +538,7 @@ def f13(fitness_value, **kwargs):
     return fitness_value
 
 
-def f14(fitness_value, **kwargs):
+def hf2(fitness_value, **kwargs):
     '''
         If a chord is found to be repeated for more than 0.5 of the chord progression
         Return fitness value / 2 if chord is not tonic - fitness_value / 1.25 if tonic

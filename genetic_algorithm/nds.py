@@ -139,12 +139,13 @@ class NonDominatedSorter:
                     index = min([front_1, front_2])
                     crossover.append(new_fronts[index][randint(0, len(new_fronts[index]) - 1)])
 
-            new_population.append(apply_crossover(self.population[crossover[0]], self.population[crossover[1]]))
+            offspring = apply_crossover(self.population[crossover[0]], self.population[crossover[1]])
 
-        # Mutation and mutation probabilitiy
-        for phenotype in new_population:
-            if randint(0, 100) <= 20:  # Chance of phenotype mutating
-                apply_mutation(phenotype)
+            # Mutation and mutation probabilitiy
+            if randint(0, 100) <= 20:  # Chance of offspring mutating
+                apply_mutation(offspring)
+
+            new_population.append(offspring)
 
         self.population = new_population
         return self.population

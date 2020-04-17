@@ -43,7 +43,9 @@ objective_3_indices = [
     'measures_note_on_first_beat',
     'num_major_minor_chords',
     'num_tonic_triad_chords',
-    'num_distinct_chords'
+    'num_distinct_chords',
+    'num_chords_with_4th',
+    'start_end_dom_triad'
 ]
 
 objective_2_values = {
@@ -84,7 +86,9 @@ objective_3_values = {
     'measures_note_on_first_beat': 0.80,
     'num_major_minor_chords': 0.60,
     'num_tonic_triad_chords': 0.50,
-    'num_distinct_chords': 0.50
+    'num_distinct_chords': 0.50,
+    'num_chords_with_4th': 0.35,
+    'start_end_dom_triad': 0.00
 }
 
 
@@ -195,15 +199,14 @@ def get_o3_values(sentiment_value=None):
             values['num_tonic_triad_chords'] = 0.45
             values['num_distinct_chords'] = 0.40
         elif sentiment_value < 1.5:
-            values['repeated_chords'] = 0.15
-            values['num_tonic_triad_chords'] = 0.45
+            values['num_tonic_triad_chords'] = 0.55
         elif sentiment_value < 3:
             values['repeated_chords'] = 0.20
-            values['num_tonic_triad_chords'] = 0.50
+            values['num_tonic_triad_chords'] = 0.55
             values['num_distinct_chords'] = 0.40
         else:
-            values['dominant_triad_chords'] = 0.40
-            values['num_tonic_triad_chords'] = 0.40
+            values['repeated_chords'] = 0.20
+            values['num_tonic_triad_chords'] = 0.55
             values['num_distinct_chords'] = 0.50
 
         return values
