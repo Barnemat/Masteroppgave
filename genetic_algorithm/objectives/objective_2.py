@@ -21,7 +21,7 @@ class Objective2(Objective):
 
         self.fitness_functions.extend([
             f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19,
-            f20, f21, f22, f23
+            f20, f21, f22, f23, f24
         ])
 
         if target_values:
@@ -29,7 +29,7 @@ class Objective2(Objective):
         else:
             self.target_values = [
                 0.30, 0.35, 0.35, 0.00, 0.10, 0.60, 0.50, 0.30, 0.30, 0.10, 0.40,  # Rhythmic variety
-                0.80, 0.20, 0.50, 0.40, 0.20, 0.20, 0.10, 0.10, 0.20, 0.10, 0.10, 0.00
+                0.80, 0.20, 0.50, 0.40, 0.20, 0.20, 0.10, 0.10, 0.20, 0.10, 0.10, 0.00, 0.40
             ]
 
         '''
@@ -574,6 +574,27 @@ def f23(**kwargs):
                 repeated_patterns += 1
 
     return round(repeated_patterns / (len(notes) - 3), 4)
+
+
+def f24(**kwargs):
+    '''
+        Returns the portion of melismas that are equal to other melismas
+    '''
+    melody = kwargs['melody']
+
+    melismas = []
+    repeated_melismas = 0
+    for beat in melody:
+        for note in beat:
+            if isinstance(note, list):
+                melisma = str(note)
+
+                if melisma in melismas:
+                    repeated_melismas += 1
+
+                melismas.append(melisma)
+
+    return round(repeated_melismas / len(melismas)) if len(melismas) > 0 else 0.0
 
 
 # TODO: Perhaps punish repeated 16th notes, and especially repeated whole notes

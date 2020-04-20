@@ -28,7 +28,8 @@ objective_2_indices = [
     'semitone_steps',
     '16th_notes',
     'whole_notes',
-    'repeated_pitches_patterns'
+    'repeated_pitches_patterns',
+    'repeated_melismas'
 ]
 
 objective_3_indices = [
@@ -45,7 +46,8 @@ objective_3_indices = [
     'num_tonic_triad_chords',
     'num_distinct_chords',
     'num_chords_with_4th',
-    'start_end_dom_triad'
+    'start_end_dom_triad',
+    'tonic_triads_w_flavor'
 ]
 
 objective_2_values = {
@@ -70,14 +72,15 @@ objective_2_values = {
     'rep_rh_patterns_4': 0.10,
     'semitone_steps': 0.20,
     '16th_notes': 0.10,
-    'whole_notes': 0.10,
-    'repeated_pitches_patterns': 0.00
+    'whole_notes': 0.05,
+    'repeated_pitches_patterns': 0.00,
+    'repeated_melismas': 0.25
 }
 
 objective_3_values = {
     'lyric_stress_constraints': 1.00,
     'start_end_tonic_triad': 1.00,
-    'dominant_triad_chords': 0.25,
+    'dominant_triad_chords': 0.30,
     'dominant_resolved_tonic': 1.00,
     'lyric_line_ends_measure': 1.00,
     'lyric_line_end_on_long_duration': 1.00,
@@ -85,10 +88,11 @@ objective_3_values = {
     'repeated_chords': 0.10,
     'measures_note_on_first_beat': 0.80,
     'num_major_minor_chords': 0.60,
-    'num_tonic_triad_chords': 0.50,
+    'num_tonic_triad_chords': 0.40,
     'num_distinct_chords': 0.50,
     'num_chords_with_4th': 0.35,
-    'start_end_dom_triad': 0.00
+    'start_end_dom_triad': 0.00,
+    'tonic_triads_w_flavor': 0.40
 }
 
 
@@ -123,7 +127,7 @@ def get_o2_values(sentiment_value=None):
             values['rhythmic_variety'] = 0.30
             values['on_beat_pitches'] = 0.40
             values['semitone_steps'] = 0.30
-            values['whole_notes'] = 0.20
+            values['whole_notes'] = 0.15
             values['repeated_pitches'] = 0.20
         elif sentiment_value < -1.5:
             values['pitch_variety'] = 0.25
@@ -133,7 +137,7 @@ def get_o2_values(sentiment_value=None):
             values['diatonic_step_movement'] = 0.40
             values['on_beat_pitches'] = 0.35
             values['semitone_steps'] = 0.25
-            values['whole_notes'] = 0.15
+            values['whole_notes'] = 0.10
             values['repeated_pitches'] = 0.15
         elif sentiment_value < -0.5:
             values['pitch_variety'] = 0.25
@@ -141,7 +145,9 @@ def get_o2_values(sentiment_value=None):
             values['count_stability'] = 0.55
             values['count_direction'] = 0.40
             values['semitone_steps'] = 0.25
+            values['dominant_triad_chords'] = 0.35
         elif sentiment_value < 1.5:
+            values['dominant_triad_chords'] = 0.35
             values['dissonant_intervals'] = 0.00
             values['semitone_steps'] = 0.10
             values['count_direction'] = 0.65
@@ -152,7 +158,6 @@ def get_o2_values(sentiment_value=None):
             values['count_direction'] = 0.70
             values['rhythmic_variety'] = 0.50
             values['semitone_steps'] = 0.10
-            values['whole_notes'] = 0.05
             values['key_focus'] = 0.40
             values['rep_pitch_patterns_3'] = 0.30
             values['rep_rh_patterns_3'] = 0.30
@@ -167,7 +172,6 @@ def get_o2_values(sentiment_value=None):
             values['rhythmic_variety'] = 0.50
             values['on_beat_pitches'] = 0.25
             values['semitone_steps'] = 0.10
-            values['whole_notes'] = 0.05
             values['key_focus'] = 0.45
             values['16th_notes'] = 0.25
             values['rep_pitch_patterns_3'] = 0.30
@@ -199,7 +203,7 @@ def get_o3_values(sentiment_value=None):
             values['num_tonic_triad_chords'] = 0.45
             values['num_distinct_chords'] = 0.40
         elif sentiment_value < 1.5:
-            values['num_tonic_triad_chords'] = 0.55
+            values['num_tonic_triad_chords'] = 0.50
         elif sentiment_value < 3:
             values['repeated_chords'] = 0.20
             values['num_tonic_triad_chords'] = 0.55

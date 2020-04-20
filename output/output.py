@@ -61,7 +61,7 @@ class LilyPondFileGenerator:
         return output + '\n'
 
     def get_melody_format(self):
-        output = '{\n'
+        output = '{\n\\autoBeamOff\n'
 
         for beat in self.data[0]:
             if len(beat) == 0:
@@ -86,12 +86,9 @@ class LilyPondFileGenerator:
         output += '\\addlyrics {\n'
 
         for line in self.lyric_syls:
-            cap_first_word = False
-
             for word in line:
                 for syl in word:
-                    output += (syl.capitalize() if not cap_first_word else syl) + ' -- '
-                    cap_first_word = True
+                    output += syl + ' -- '
                 output += ' '
                 output = output[:-4] + '\n'
 

@@ -18,7 +18,7 @@ class Objective1(Objective):
         super().__init__()
 
         self.fitness_functions.extend([
-            f1, f2, f3, f4, f5, f6, f7, f8, f9
+            f1, f2, f3, f4, f5, f6, f7, f8
         ])
 
     def get_total_fitness_value(self, phenotype):
@@ -326,14 +326,17 @@ def f8(**kwargs):
     return 0
 
 
+'''
+No longer needed, as this is defined in initial note generation
 def f9(**kwargs):
-    '''
+
         Punish notes that are lower than g
         These notes heavily interfere with chords, and are estecially unpleasing in notation
         Should have been defined elsewhere, but now fitness is easier
-    '''
+
     all_notes = kwargs['chord_pitches'] + kwargs['scale_pitches'] + kwargs['non_scale_pitches']
     return -len([
         note for note in all_notes if not note.startswith('r')
         and get_note_abs_index(note) <= get_note_abs_index('g')
     ])
+'''

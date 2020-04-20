@@ -25,7 +25,7 @@ class Objective3(Objective):
         super().__init__()
 
         self.fitness_functions.extend([
-            f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12
+            f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15
         ])
 
         self.harmonic_punishment_functions = [
@@ -36,7 +36,7 @@ class Objective3(Objective):
             self.target_values = target_values
         else:
             self.target_values = [
-                1.00, 1.00, 0.35, 1.00, 1.00, 1.00, 0.60, 0.30, 0.70, 0.60, 0.40, 0.50, 0.35, 0.00
+                1.00, 1.00, 0.35, 1.00, 1.00, 1.00, 0.60, 0.30, 0.70, 0.60, 0.40, 0.50, 0.35, 0.00, 0.40
             ]
 
         self.syllables = syllables
@@ -507,6 +507,26 @@ def f14(**kwargs):
         points += chord_points
 
     return points
+
+
+def f15(**kwargs):
+    '''
+        Returns the portion of tonic triad chords with flavor notes
+        num(tonic triads with flavor) / num(tonic triad chords)
+    '''
+    chords = [chord[:-1] for chord in kwargs['chords']]
+    key = kwargs['key']
+
+    tonic_triad_chords = 0
+    flavor_triads = 0
+    for chord in chords:
+        if is_correct_triad(chord, key, 0):
+            tonic_triad_chords += 1
+
+            if len(chord) == 4:
+                flavor_triads += 1
+
+    return round(flavor_triads / tonic_triad_chords, 4) if tonic_triad_chords > 0 else 0.0
 
 
 '''

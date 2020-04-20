@@ -10,7 +10,9 @@ from genetic_algorithm.GLOBAL import (
     get_note_abs_index,
     absolute_note_list,
     triads,
-    get_key_sharps_flats
+    get_key_sharps_flats,
+    min_notes,
+    accurate_beat_counter
 )
 
 
@@ -115,7 +117,7 @@ class Phenotype:
         num_chords, and especially root are used in special cases (e.g. mutation) where function
         is reused
         '''
-        num_chords = num_chords if num_chords else int(ceil(len(melody) / int(self.time_signature[0])))
+        num_chords = num_chords if num_chords else accurate_beat_counter(melody)
         chords = []
 
         for _ in range(num_chords):
@@ -138,7 +140,7 @@ class Phenotype:
                 else:
                     note = absolute_note_list[note_abs_index + triad[x]]
                     if isinstance(note, list):
-                        maj_min = 'maj' if triad == triads[0] or triad == triads[3] else 'min'
+                        maj_min = 'maj' if triad == triads[1] or triad == triads[3] else 'min'
                         sharps_flats = get_key_sharps_flats([notes[0], maj_min])
                         if sharps_flats == 'es':
                             note = note[0]
@@ -199,6 +201,29 @@ class Phenotype:
         return [beat, None]
 
     def get_random_note(self, time, chord_note=False, only_pitch=False):
+        note = self.get_rand_note(time, chord_note, only_pitch)
+        octave = choice(allowed_chord_octaves) if chord_note else choice(allowed_melody_octaves)
+
+        if chord_note:
+            while get_note_abs_index(note + octave) < get_note_abs_index(min_notes[1]):
+                note = self.get_rand_note(time, chord_note, only_pitch)
+                octave = choice(allowed_chord_octaves)
+        else:
+            while get_note_abs_index(note + octave) < get_note_abs_index(min_notes[0]):
+                note = self.get_rand_note(time, chord_note, only_pitch)
+                octave = choice(allowed_melody_octaves)
+
+        # Sets the chance of a note being dotted
+        # Dotted notes need to be handled to keep time
+        dotted = '.' if not (time == 16 or time == 1) and not chord_note and not only_pitch and randint(0, 100) < 30 else ''
+
+        return note + octave + str(time) + dotted
+
+    def get_rand_note(self, time, chord_note, only_pitch):
+        '''
+            Help function for get_random_note
+            Added to handle minimum note pitch
+        '''
         # A note could be a rest, but NOT in a chord
         note = choice(possible_notes + ['r']) if not chord_note and not only_pitch else choice(possible_notes)
 
@@ -216,13 +241,7 @@ class Phenotype:
             else:
                 note = note[choice([-1, 0])]
 
-        octave = choice(allowed_chord_octaves) if chord_note else choice(allowed_melody_octaves)
-
-        # Sets the chance of a note being dotted
-        # Dotted notes need to be handled to keep time
-        dotted = '.' if not time == 16 and not chord_note and not only_pitch and randint(0, 100) < 10 else ''
-
-        return note + octave + str(time) + dotted
+        return note
 
     def set_random_melisma_in_beat(self, beat):
         if len(beat) == 2:

@@ -9,7 +9,8 @@ from genetic_algorithm.GLOBAL import (
     allowed_chord_octaves,
     max_note_divisor,
     remove_note_timing,
-    get_note_abs_index
+    get_note_abs_index,
+    min_notes
 )
 
 '''''''''''''''
@@ -38,9 +39,19 @@ def get_random_note_indices(melody):
 
 def get_random_scale_note(key, timing, chord=False):
     note_list = get_scale_notes(key)
+    new_note = choice(note_list)
+    octave = choice(allowed_chord_octaves if chord else allowed_melody_octaves)
 
-    new_note = choice(note_list) + choice(allowed_chord_octaves if chord else allowed_melody_octaves) + timing
-    return new_note
+    if chord:
+        while get_note_abs_index(new_note + octave) < get_note_abs_index(min_notes[1]):
+            new_note = choice(note_list)
+            octave = choice(allowed_chord_octaves)
+    else:
+        while get_note_abs_index(new_note + octave) < get_note_abs_index(min_notes[0]):
+            new_note = choice(note_list)
+            octave = choice(allowed_melody_octaves)
+
+    return new_note + octave + timing
 
 
 def get_random_note_before_index(melody, beat, note, melisma_index):

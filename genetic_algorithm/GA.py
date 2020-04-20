@@ -25,6 +25,7 @@ class GA:
         self.num_syllables = SyllableDetector.count_syllables_lyric(self.syllable_detector.syllables)
         self.time_signature = time_signature if time_signature else lyric.measure_handler.measure
         self.sentiment = lyric.get_sentiment()
+        self.tournament_winner_indices = []
 
         self.generate_musical_key()
         self.set_possible_note_lengths()
@@ -77,6 +78,7 @@ class GA:
     def iterate(self):
         nds = NonDominatedSorter(self.population, self.objectives, self.population_size)
         self.population = nds.get_new_population()
+        self.tournament_winner_indices = nds.tournament_winner_indices.copy()
 
 
 def get_valid_min_key(note):

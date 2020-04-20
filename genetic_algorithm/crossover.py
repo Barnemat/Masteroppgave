@@ -45,7 +45,7 @@ def clean_melody(melody, num_syls):
 
 
 def add_beats_for_dot_notes(melody):
-    beats_to_add = accurate_beat_counter(melody)
+    beats_to_add = accurate_beat_counter(melody, decimals=True)
     while beats_to_add > 0:
         melody.insert(randint(0, len(melody) - 1), [])
         beats_to_add -= 1
@@ -103,14 +103,13 @@ def get_melody_cut(melody, num_beats_cut):
     return add_beats_for_dot_notes(cut)
 
 
-def get_chord_cut(chords, num_chords, num_beats, time_signature):
+def get_chord_cut(chords, num_chords, num_measures):  # MAybe append random chords when len(chords) < chords_to_cut
     '''
         Returns a cut of chords
         IMPORTANT:
         Only use temp chords, because function makes in-place modifications to list which are not returned
     '''
     cut = []
-    num_measures = int(ceil(num_beats / time_signature))
     chords_to_cut = num_measures - num_chords
 
     chords_to_cut = chords_to_cut if chords_to_cut <= len(chords) else len(chords)
@@ -153,12 +152,12 @@ def crossover_random_beats(p1, p2):
 
         chord_copy = [] if len(current_chords) > 0 else current_pheno.genes[1][:]
         len_melody = accurate_beat_counter(melody_genes)
+        num_measures = int(ceil(len_melody / time_signature))
 
         chord_cut = get_chord_cut(
-            current_chords if len(current_chords) > 0 else [choice(chord_copy)],
+            current_chords if len(current_chords) > 0 else [choice(chord_copy) for _ in range(num_measures)],
             len(chord_genes),
-            len_melody,
-            time_signature
+            num_measures
         )
 
         chord_genes.extend(chord_cut)
@@ -169,11 +168,21 @@ def crossover_random_beats(p1, p2):
                 p2_melody = p2_melody[len(melody_cut):]
             else:
                 p2_melody = []
+
+            if len(p2_chords) > len(chord_cut):
+                p2_chords = p2_chords[len(chord_cut):]
+            else:
+                p2_chords = []
         else:
             if len(p1_melody) > len(melody_cut):
                 p1_melody = p1_melody[len(melody_cut):]
             else:
                 p1_melody = []
+
+            if len(p1_chords) > len(chord_cut):
+                p1_chords = p1_chords[len(chord_cut):]
+            else:
+                p1_chords = []
 
         note_count = get_num_syls_in_melody(melody_genes)
         if note_count >= num_syls:

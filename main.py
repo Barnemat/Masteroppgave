@@ -3,11 +3,11 @@ from load_and_store import load_lyrics
 from lyric import Lyric
 from genetic_algorithm.GA import GA
 from output.output import LilyPondFileGenerator
-from random import randint
+from random import randint, choice
 
 if __name__ == '__main__':
-    texts = load_lyrics('/syllable_handling/testtekster/')
-    lyric_title = 'bridget-o-malley'
+    texts = load_lyrics('/lyrics/')
+    lyric_title = 'nellie-dean'
     lyric = Lyric(texts[lyric_title], lyric_title)
 
     population_size = 1000
@@ -25,7 +25,13 @@ if __name__ == '__main__':
         if i % 100 == 0 or i == num_generations - 1:
 
             for _ in range(5):
-                phenotype = ga.population[randint(0, len(ga.population) - 1)]
+                phenotype = None
+
+                if len(ga.tournament_winner_indices) > 50:
+                    phenotype = ga.population[choice(ga.tournament_winner_indices)]
+                else:
+                    phenotype = ga.population[randint(0, len(ga.population) - 1)]
+
                 file_generator = LilyPondFileGenerator(phenotype.genes, ga.key, ga.time_signature, lyric.get_syllables())
                 file_generator.generate_file(os.getcwd() + '/output/outfiles/semi-done/' + str(i) + '/')
 

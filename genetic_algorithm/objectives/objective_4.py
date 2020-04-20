@@ -120,13 +120,14 @@ def f3(**kwargs):
 
 def f4(**kwargs):
     '''
-        Punish root note higher than middle c
+        Punish root note higher than middle g sharp
         = -20 fitness score
         Done to make it less likely that chord interferes with melody line
+        (Changed from middle c to allow for all notes in octave - min_note changed)
     '''
     root = kwargs['chord'][0]
 
-    if get_note_abs_index(root) > get_note_abs_index('c'):
+    if get_note_abs_index(root) > get_note_abs_index('gis\''):
         return -20
 
     return 0

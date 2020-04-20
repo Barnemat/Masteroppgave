@@ -9,10 +9,10 @@ from sentiment_analysis.sentiment_analyser import lyric_analyser
 class Lyric:
     def __init__(self, lyric, title):
         self.title = title
-        self.lyric = lyric
-        self.syllable_detector = SyllableDetector(get_first_verse(lyric))
+        self.lyric = lyric[1:]
+        self.syllable_detector = SyllableDetector(get_first_verse(self.lyric))
         self.measure_handler = MeasureHandler(self.get_syllables())
-        self.sentiment = lyric_analyser(True, lyric={title: lyric})
+        self.sentiment = lyric_analyser(True, lyric={title: self.lyric})
 
     def get_syllables(self):
         return self.syllable_detector.find_syllables_lyric()

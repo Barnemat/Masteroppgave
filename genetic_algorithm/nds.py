@@ -22,6 +22,7 @@ class NonDominatedSorter:
 
         # [0, []], where 0 is the dominated_by_counter and [] is the dominates_list
         self.domination_list = [[0, []] for phoneme in population]
+        self.tournament_winner_indices = []
 
     def set_population_values(self):
         for phenotype in self.population:
@@ -146,6 +147,12 @@ class NonDominatedSorter:
                 apply_mutation(offspring)
 
             new_population.append(offspring)
+
+            # Adds indices from crossover (tournament selection winners) to tournament_winner_indices
+            self.tournament_winner_indices = []
+            for index in crossover:
+                if index not in self.tournament_winner_indices:
+                    self.tournament_winner_indices.append(index)
 
         self.population = new_population
         return self.population

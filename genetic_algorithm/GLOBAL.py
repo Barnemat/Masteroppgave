@@ -32,6 +32,10 @@ max_note_divisor = 16
 allowed_melody_octaves = ['', '\'', '\'\'']
 allowed_chord_octaves = [',', '']
 
+min_melody_note = 'g'
+min_chord_note = 'a,'
+min_notes = [min_melody_note, min_chord_note]
+
 # Chords usually found in a given scale follow some rules, as to their tonality for given notes in scales
 # Corresponding harmonies(chords) for a note in scales:
 major_scale_chords = ['maj', 'min', 'min', 'maj', 'maj', 'min', 'dim']
@@ -195,29 +199,31 @@ def get_note_distance(note1, note2):
     return abs(note1_index - note2_index)
 
 
-def beat_count(note):
+def beat_count(note, decimals=False):
     timing = get_note_timing(note)
     dotted = timing.endswith('.')
+    dec_count = 0.0
 
     if dotted:
         timing = int(timing[:-1])
+        dec_count += timing // 2
         timing += timing // 2
     else:
         timing = int(timing)
 
-    return 4 / timing
+    return 4 / timing if not decimals else 4 / dec_count if dec_count > 0 else 0.0
 
 
-def accurate_beat_counter(melody):
+def accurate_beat_counter(melody, decimals=False):
     count = 0
 
     for beat in melody:
         for note in beat:
             if isinstance(note, list):
                 for mel_note in note:
-                    count += beat_count(mel_note)
+                    count += beat_count(mel_note, decimals)
             else:
-                count += beat_count(note)
+                count += beat_count(note, decimals)
 
     return int(ceil(count))
 
