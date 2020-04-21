@@ -199,33 +199,33 @@ def get_note_distance(note1, note2):
     return abs(note1_index - note2_index)
 
 
-def beat_count(note, decimals=False):
+def beat_count(note):
     timing = get_note_timing(note)
     dotted = timing.endswith('.')
-    dec_count = 0.0
 
     if dotted:
         timing = int(timing[:-1])
-        dec_count += timing // 2
-        timing += timing // 2
+        dot = timing * 2
+
+        timing = (4 / timing) + (4 / dot)
     else:
-        timing = int(timing)
+        timing = 4 / int(timing)
 
-    return 4 / timing if not decimals else 4 / dec_count if dec_count > 0 else 0.0
+    return timing
 
 
-def accurate_beat_counter(melody, decimals=False):
-    count = 0
+def accurate_beat_counter(melody, no_ceil=False):
+    count = 0.0
 
     for beat in melody:
         for note in beat:
             if isinstance(note, list):
                 for mel_note in note:
-                    count += beat_count(mel_note, decimals)
+                    count += beat_count(mel_note)
             else:
-                count += beat_count(note, decimals)
+                count += beat_count(note)
 
-    return int(ceil(count))
+    return float(count) if no_ceil else int(ceil(count))
 
 
 def get_all_notes(melody):

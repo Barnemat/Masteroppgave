@@ -45,7 +45,7 @@ def clean_melody(melody, num_syls):
 
 
 def add_beats_for_dot_notes(melody):
-    beats_to_add = accurate_beat_counter(melody, decimals=True)
+    beats_to_add = accurate_beat_counter(melody, decimals=True)  # Likely retired
     while beats_to_add > 0:
         melody.insert(randint(0, len(melody) - 1), [])
         beats_to_add -= 1
@@ -119,10 +119,36 @@ def get_chord_cut(chords, num_chords, num_measures):  # MAybe append random chor
     return cut
 
 
+def get_melody_as_measures(mel, time):
+    melody = mel.copy()
+    measures = []
+
+    while len(melody) > 0:
+        measure = []
+        for _ in range(time):
+            if len(melody) == 0:
+                break
+
+            measure.append(melody.pop(0))
+        measures.append(measure)
+    return measures
+
+
+def remove_measures_from_melody(melody):
+    beats = []
+
+    for measure in melody:
+        for beat in measure:
+            beats.append(beat)
+
+    return beats
+
+
 def crossover_random_beats(p1, p2):
     '''
         Takes random number of beats from both phenotypes and combines them
         Empty beats are always added to previous note (or rest)
+        DEPRECATED: 20.04.20.
     '''
     time_signature = int(p1.time_signature[0])
     num_syls = p1.num_syllables
@@ -197,12 +223,73 @@ def crossover_random_beats(p1, p2):
 
 def crossover_random_measures(p1, p2):
     '''
-        # TODO: Implement func
-        Takes random number of measures from both phenotypes and combines them
-        Empty beats are always added to previous note (or rest)
-        Empty beats makes some beats span multiple measures, and this must be handled!
+        Takes measures from both phenotypes and combines them, systematically first, randomly later
+        to fill in for remaining syllables
+
+        First meausure from one phenotype, second measure from other phenotype, third measure from first phenotype etc.
     '''
-    pass
+    time_signature = int(p1.time_signature[0])
+    num_syls = p1.num_syllables
+
+    melody_genes = []
+    chord_genes = []
+
+    p1_melody = get_melody_as_measures(p1.genes[0], time_signature)
+    p1_chords = p1.genes[1][:]
+    p2_melody = get_melody_as_measures(p2.genes[0], time_signature)
+    p2_chords = p2.genes[1][:]
+
+    current_pheno = choice([p1, p2])
+    note_count = 0
+    for i in range(min(len(p1_melody), len(p2_melody))):
+        current_melody = p1_melody if current_pheno == p1 else p2_melody
+        current_chords = p1_chords if current_pheno == p1 else p2_chords
+
+        current_pheno = choice([p1, p2])
+
+        if i >= len(current_melody) or i >= len(current_chords):
+            break
+
+        measure = current_melody[i]
+        chord = current_chords[i]
+
+        if accurate_beat_counter(measure, True) != time_signature:
+            break
+
+        melody_genes.append(measure)
+        chord_genes.append(chord)
+
+        note_count += get_num_syls_in_melody(measure)
+
+        if note_count >= num_syls:
+            break
+
+    while note_count < num_syls:
+        current_melody = p1_melody if current_pheno == p1 else p2_melody
+        current_chords = p1_chords if current_pheno == p1 else p2_chords
+
+        current_pheno = choice([p1, p2])
+
+        rand_index = randint(0, len(current_melody) - 1)
+
+        try:
+            measure = current_melody[rand_index]
+            chord = current_chords[rand_index]
+        except IndexError:
+            continue
+
+        if accurate_beat_counter(measure, True) != time_signature:
+            continue
+
+        melody_genes.append(measure)
+        chord_genes.append(chord)
+
+        note_count += get_num_syls_in_melody(measure)
+
+    melody_genes = clean_melody(remove_measures_from_melody(melody_genes), num_syls)
+    chord_genes = clean_chords(chord_genes, accurate_beat_counter(melody_genes) / time_signature)
+
+    return [melody_genes, chord_genes]
 
 
 def apply_crossover(phenotype1, phenotype2):
@@ -212,7 +299,7 @@ def apply_crossover(phenotype1, phenotype2):
     '''
 
     # Temp - Add more possibilities as they are implemented
-    genes = crossover_random_beats(deepcopy(phenotype1), deepcopy(phenotype2))
+    genes = crossover_random_measures(deepcopy(phenotype1), deepcopy(phenotype2))
     # print(phenotype1.genes)
     # print(genes)
     return Phenotype(

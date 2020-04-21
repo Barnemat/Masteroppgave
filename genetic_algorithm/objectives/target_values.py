@@ -51,7 +51,7 @@ objective_3_indices = [
 ]
 
 objective_2_values = {
-    'pitch_variety': 0.30,
+    'pitch_variety': 0.40,
     'pitch_range': 0.60,
     'key_focus': 0.35,
     'non_scale_notes': 0.00,
@@ -59,19 +59,19 @@ objective_2_values = {
     'count_direction': 0.50,
     'count_stability': 0.50,
     'diatonic_step_movement': 0.30,
-    'note_density': 0.30,
-    'rest_density': 0.10,
-    'rhythmic_variety': 0.40,
+    'note_density': 0.40,
+    'rest_density': 0.15,
+    'rhythmic_variety': 0.75,
     'rhythmic_range': 0.80,
     'repeated_pitches': 0.10,
-    'repeated_rhythms': 0.50,
-    'on_beat_pitches': 0.30,
-    'rep_pitch_patterns_3': 0.20,
-    'rep_rh_patterns_3': 0.20,
+    'repeated_rhythms': 0.25,
+    'on_beat_pitches': 0.35,
+    'rep_pitch_patterns_3': 0.15,
+    'rep_rh_patterns_3': 0.15,
     'rep_pitch_patterns_4': 0.10,
     'rep_rh_patterns_4': 0.10,
     'semitone_steps': 0.20,
-    '16th_notes': 0.10,
+    '16th_notes': 0.15,
     'whole_notes': 0.05,
     'repeated_pitches_patterns': 0.00,
     'repeated_melismas': 0.25
@@ -86,13 +86,13 @@ objective_3_values = {
     'lyric_line_end_on_long_duration': 1.00,
     'lyric_line_end_on_tonic': 0.60,
     'repeated_chords': 0.10,
-    'measures_note_on_first_beat': 0.80,
+    'measures_note_on_first_beat': 1.00,
     'num_major_minor_chords': 0.60,
-    'num_tonic_triad_chords': 0.40,
+    'num_tonic_triad_chords': 0.50,
     'num_distinct_chords': 0.50,
-    'num_chords_with_4th': 0.35,
+    'num_chords_with_4th': 0.30,
     'start_end_dom_triad': 0.00,
-    'tonic_triads_w_flavor': 0.40
+    'tonic_triads_w_flavor': 0.30
 }
 
 
@@ -159,8 +159,8 @@ def get_o2_values(sentiment_value=None):
             values['rhythmic_variety'] = 0.50
             values['semitone_steps'] = 0.10
             values['key_focus'] = 0.40
-            values['rep_pitch_patterns_3'] = 0.30
-            values['rep_rh_patterns_3'] = 0.30
+            values['rep_pitch_patterns_3'] = 0.25
+            values['rep_rh_patterns_3'] = 0.25
             values['rep_pitch_patterns_4'] = 0.15
             values['rep_rh_patterns_4'] = 0.15
         else:
@@ -174,8 +174,8 @@ def get_o2_values(sentiment_value=None):
             values['semitone_steps'] = 0.10
             values['key_focus'] = 0.45
             values['16th_notes'] = 0.25
-            values['rep_pitch_patterns_3'] = 0.30
-            values['rep_rh_patterns_3'] = 0.30
+            values['rep_pitch_patterns_3'] = 0.25
+            values['rep_rh_patterns_3'] = 0.25
             values['rep_pitch_patterns_4'] = 0.15
             values['rep_rh_patterns_4'] = 0.15
 

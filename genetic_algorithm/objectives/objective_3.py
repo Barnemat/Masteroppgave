@@ -1,4 +1,3 @@
-from math import ceil
 from genetic_algorithm.objectives.objective import Objective
 from genetic_algorithm.GLOBAL import (
     get_note_timing,
@@ -53,7 +52,7 @@ class Objective3(Objective):
         key = phenotype.key
         time_signature = phenotype.time_signature
         scale = get_scale_notes(key)
-        measures = get_measures_from_melody(melody, time_signature)
+        measures = get_measures_from_melody(melody, int(time_signature[0]))
         line_ending_indices = get_line_ending_indices(self.syllables)
         all_notes = get_all_notes(melody)
 
@@ -609,18 +608,18 @@ def get_num_syls_in_line(line):
     return count
 
 
-def get_measures_from_melody(mel, time_signature):
+def get_measures_from_melody(mel, time):
     melody = mel.copy()
     measures = []
 
-    for _ in range(int(ceil(len(melody) // int(time_signature[0])))):
+    while len(melody) > 0:
         measure = []
+        for _ in range(time):
+            if len(melody) == 0:
+                break
 
-        for _ in range(int(time_signature[0])):
             measure.append(melody.pop(0))
-
         measures.append(measure)
-
     return measures
 
 

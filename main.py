@@ -7,7 +7,7 @@ from random import randint, choice
 
 if __name__ == '__main__':
     texts = load_lyrics('/lyrics/')
-    lyric_title = 'nellie-dean'
+    lyric_title = 'henry-martin'
     lyric = Lyric(texts[lyric_title], lyric_title)
 
     population_size = 1000
@@ -22,7 +22,7 @@ if __name__ == '__main__':
         print('iteration', i)
         ga.iterate()
 
-        if i % 100 == 0 or i == num_generations - 1:
+        if i % 1 == 0 or i == num_generations - 1:
 
             for _ in range(5):
                 phenotype = None

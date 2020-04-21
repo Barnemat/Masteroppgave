@@ -18,7 +18,7 @@ class Objective1(Objective):
         super().__init__()
 
         self.fitness_functions.extend([
-            f1, f2, f3, f4, f5, f6, f7, f8
+            f1, f2, f3, f4, f5, f6, f7, f8, f9
         ])
 
     def get_total_fitness_value(self, phenotype):
@@ -78,7 +78,8 @@ class Objective1(Objective):
                     scale_pitches=scale_pitches,
                     non_scale_pitches=non_scale_pitches,
                     ornament_notes=ornament_notes,
-                    measure=measure
+                    measure=measure,
+                    time=int(time_signature[0])
                 )
 
             # print('Measure:', measure)
@@ -218,7 +219,7 @@ def f1(**kwargs):
         = +1 fitness score
         # TODO: Perhaps <= and not just <
     '''
-    return 1 if len(kwargs['scale_pitches'] + kwargs['non_scale_pitches']) < len(kwargs['chord_pitches']) else 0
+    return 1 if len(kwargs['scale_pitches'] + kwargs['non_scale_pitches']) <= len(kwargs['chord_pitches']) else 0
 
 
 def f2(**kwargs):
@@ -275,7 +276,7 @@ def f5(**kwargs):
 
     root_fifth = [remove_note_octave(chord_notes[0]), remove_note_octave(chord_notes[2])]
 
-    if melody[0] in root_fifth:
+    if remove_note_octave(melody[0]) in root_fifth:
         return 1
 
     return 0
@@ -321,9 +322,23 @@ def f7(**kwargs):
 
 def f8(**kwargs):
     '''
-        # TODO: Decide if augmented 9th is actually that bad
+        Awards measures with at least numerator amount of notes from time_signature
+        Fitness +2
     '''
-    return 0
+    time = kwargs['time']
+    notes = kwargs['scale_pitches'] + kwargs['non_scale_pitches'] + kwargs['chord_pitches']
+
+    return 2 if len(notes) >= time else 0
+
+
+def f9(**kwargs):
+    '''
+        If measure contains only one note
+        Fitness -1
+    '''
+    notes = kwargs['scale_pitches'] + kwargs['non_scale_pitches'] + kwargs['chord_pitches']
+
+    return -1 if len(notes) == 1 else 0
 
 
 '''

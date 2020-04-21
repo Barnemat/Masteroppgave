@@ -86,6 +86,7 @@ class LilyPondFileGenerator:
         output += '\\addlyrics {\n'
 
         for line in self.lyric_syls:
+            line[0][0] = line[0][0].capitalize()
             for word in line:
                 for syl in word:
                     output += syl + ' -- '
