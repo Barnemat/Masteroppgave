@@ -1,4 +1,5 @@
 from genetic_algorithm.objectives.objective import Objective
+from genetic_algorithm.objectives.objective_3 import is_correct_triad
 from genetic_algorithm.GLOBAL import (
     get_scale_notes,
     remove_note_timing,
@@ -72,7 +73,9 @@ def f2(**kwargs):
         Punish chord not following set scale degrees
         https://en.wikipedia.org/wiki/Major_scale#Triad_qualities
         https://en.wikipedia.org/wiki/Minor_scale
-        = -30 fitness score
+        = -20 fitness score
+        And award correct triads based on their general usefulness
+        fitness_score = value[i]
     '''
 
     chord = kwargs['chord'][:-1]
@@ -81,21 +84,13 @@ def f2(**kwargs):
     root = remove_note_octave(chord[0])
 
     if root in scale:
-        index = scale.index(root)
-        distances = get_triad_distances(index, key)
-        root_scale = get_scale_notes([root, distances[1]])
+        return_values = [10, 2, 4, 6, 6, 2, 2]
 
-        for i in range(len(chord)):
-            if i == 3:
-                break
-
-            chord_note_no_oct = remove_note_octave(chord[i])
-
-            if (chord_note_no_oct not in root_scale
-                    or not get_note_distance(chord[0], chord[i]) == distances[0][i]):
-                return -30
+        for i in range(len(scale)):
+            if root == scale[i]:
+                return return_values[i] if is_correct_triad(chord, key, i) else -20
     else:
-        return -30
+        return -20
 
     return 0
 

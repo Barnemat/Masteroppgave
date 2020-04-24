@@ -181,7 +181,58 @@ def mutate_scale_note(phenotype):
 
 
 def mutate_timing_in_beat(phenotype):
-    pass
+    '''
+        Finds a random beat with more than one note and swaps the timing of the notes
+    '''
+    melody = phenotype.genes[0].copy()
+
+    beats = []  # len(beat) > 1
+    for index in range(len(melody)):
+        if len(melody[index]) > 1:
+            beats.append(index)
+
+    if len(beats) == 0:
+        apply_mutation(phenotype)  # Try other mutation type
+        return
+
+    timing_1, timing_2 = 0, 0
+    tries_left = len(melody)
+    while timing_1 == timing_2 and tries_left > 0:
+        beat_index = choice(beats)
+        beat = melody[beat_index]
+
+        note_indices = [i for i in range(len(beat))]
+        note1_index = choice(note_indices)
+        note_indices.remove(note1_index)
+        note2_index = choice(note_indices)
+
+        note1 = beat[note1_index]
+        note2 = beat[note2_index]
+
+        mel_index_1 = -1
+        if isinstance(note1, list):
+            mel_index_1 = randint(0, len(note1) - 1)
+
+        mel_index_2 = -1
+        if isinstance(note2, list):
+            mel_index_2 = randint(0, len(note2) - 1)
+
+        timing_1 = get_note_timing(note1 if mel_index_1 < 0 else note1[mel_index_1])
+        timing_2 = get_note_timing(note2 if mel_index_2 < 0 else note2[mel_index_2])
+
+        tries_left -= 1
+
+    if mel_index_1 > -1:
+        melody[beat_index][note1_index][mel_index_1] = remove_note_timing(note1[mel_index_1]) + timing_2
+    else:
+        melody[beat_index][note1_index] = remove_note_timing(note1) + timing_2
+
+    if mel_index_2 > -1:
+        melody[beat_index][note2_index][mel_index_2] = remove_note_timing(note2[mel_index_2]) + timing_1
+    else:
+        melody[beat_index][note2_index] = remove_note_timing(note2) + timing_1
+
+    phenotype.genes[0] = melody
 
 
 def mutate_divide_note(phenotype):
@@ -204,7 +255,8 @@ def mutate_divide_note(phenotype):
         note, beat = get_random_note_indices(melody)
         tries += 1
 
-        if tries > 100:
+        if tries > 50:
+            apply_mutation(phenotype)  # Try other mutation type
             return
 
     note_no_timing = remove_note_timing(melody[beat][note])
@@ -219,6 +271,7 @@ def mutate_divide_note(phenotype):
 
     if melody[beat][note].endswith('1') or melody[beat][note].endswith('2'):
         if len(melody) >= beat + 1:
+            apply_mutation(phenotype)  # Try other mutation type
             return
 
         melody.pop(beat + 1)
@@ -248,6 +301,7 @@ def switch_random_notes(phenotype):
             switch_beat, switch_note, switch_mel_index = get_random_note_after_index(melody, beat, note, melisma_index)
 
     if not switch_beat:
+        apply_mutation(phenotype)  # Try other mutation type
         return
 
     a = melody[beat][note][melisma_index] if melisma_index else melody[beat][note]
@@ -255,6 +309,7 @@ def switch_random_notes(phenotype):
 
     # Don't have time to properly fix error
     if isinstance(a, list) or isinstance(b, list):
+        apply_mutation(phenotype)  # Try other mutation type
         return
 
     if a and b:
@@ -322,6 +377,7 @@ def mutate_extra_note_in_chord(phenotype):
         tries -= 1
 
     if tries <= 0:
+        apply_mutation(phenotype)  # Try other mutation type
         return
 
     chord.append(new_note)
@@ -349,6 +405,7 @@ def switch_random_chords(phenotype):
         tries -= 1
 
     if tries <= 0:
+        apply_mutation(phenotype)  # Try other mutation type
         return
 
     a_chord = chords[a]
@@ -366,8 +423,8 @@ def apply_mutation(phenotype):
         Probabilites are defined as the number space between the previous variable and current variable
         max should be 100
     '''
-    random_note = 10
-    scale_note = 35
+    random_note = 5
+    scale_note = 30
     timing_in_beat = 45
     divide_note = 50
     switch_notes = 60

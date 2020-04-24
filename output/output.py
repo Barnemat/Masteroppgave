@@ -61,7 +61,8 @@ class LilyPondFileGenerator:
         return output + '\n'
 
     def get_melody_format(self):
-        output = '{\n\\autoBeamOff\n'
+        output = '{\n'
+        output += '\\autoBeamOff\n'
 
         for beat in self.data[0]:
             if len(beat) == 0:
@@ -70,19 +71,17 @@ class LilyPondFileGenerator:
             for note in beat:
                 if isinstance(note, list):
                     first_mel_note = note[0]
-                    sub_mel_notes = note[1:]
+                    sub_mel_notes = ''.join([sub_mel_note + ' ' for sub_mel_note in note[1:]])
+                    endswith_dot = len([sub_note for sub_note in note if sub_note.endswith('.')]) > 0
 
-                    output += first_mel_note + '([ '
-
-                    for sub_mel_note in sub_mel_notes:
-                        output += sub_mel_note + ' '
-
-                    output += ']) '
+                    output += first_mel_note + '([ ' if not endswith_dot else first_mel_note + '('
+                    output += sub_mel_notes
+                    output += ']) ' if not endswith_dot else first_mel_note + ') '
                 else:
                     output += note + ' '
             output += '\n'
 
-        output += '}\n'
+        output += '\\bar \"|.\"}\n'
         output += '\\addlyrics {\n'
 
         for line in self.lyric_syls:
@@ -96,9 +95,9 @@ class LilyPondFileGenerator:
         return output + '}\n'
 
     def get_chord_format(self):
-        output = ''
+        output = '\\set Staff.midiMaximumVolume = #0.7\n'
 
         for chord in self.data[1]:
             output += chord + '\n'
 
-        return output
+        return output + '\\bar \"|.\"'

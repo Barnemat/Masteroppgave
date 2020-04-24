@@ -134,6 +134,29 @@ def get_quanta(notes):
     return quanta
 
 
+def is_diatonic_distance(note1, note2):
+    '''
+        Helping function for f8
+        Diatonic distances are eihter 2 semitones or 1 semitone between E/F and between B/C
+    '''
+    distance = get_note_distance(note1, note2)
+
+    if distance == 2:
+        return True
+    elif distance != 1:
+        return False
+
+    clean_n1 = remove_note_octave(remove_note_timing(note1))
+    clean_n2 = remove_note_octave(remove_note_timing(note2))
+
+    if (clean_n1 == 'e' and clean_n2 == 'f') or (clean_n1 == 'f' and clean_n2 == 'e'):
+        return True
+    elif (clean_n1 == 'b' and clean_n2 == 'c') or (clean_n1 == 'c' and clean_n2 == 'b'):
+        return True
+
+    return False
+
+
 '''
     **kwargs:
     notes
@@ -226,7 +249,6 @@ Interval Dissonance rating
 
 def f5(**kwargs):
     '''
-        # TODO: MUST (?) USE SCALE
         Dissonant intervals - sum(dissonance rating of intervals) / num(intervals)
         Follows table above
     '''
@@ -304,9 +326,7 @@ def f8(**kwargs):
         note1 = remove_note_timing(interval[0])
         note2 = remove_note_timing(interval[1])
 
-        distance = get_note_distance(note1, note2)
-
-        if distance == 1 or distance == 2:
+        if is_diatonic_distance(note1, note2):
             diatonic_steps += 1
 
     return round(diatonic_steps / len(intervals), 4)

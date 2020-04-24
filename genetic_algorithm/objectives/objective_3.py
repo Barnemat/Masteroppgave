@@ -75,10 +75,11 @@ class Objective3(Objective):
 
             func_num += 1
             # self.fitness_score += fitness_score
-            # print(fitness_score)
+
+        # print(fitness_score)
 
         for func in self.harmonic_punishment_functions:
-            fitness_score = func(fitness_score, chords=chords, key=key)
+            fitness_score += func(chords=chords, key=key)
 
         # print(fitness_score)
         return round(fitness_score, 4)
@@ -207,25 +208,13 @@ def f2(**kwargs):
     '''
     chords = kwargs['chords']
     key = kwargs['key']
-    scale = kwargs['scale']
 
     first_last = [chords[0][:-1], chords[-1][:-1]]
-    distances = get_triad_distances(0, key)[0]
 
     points = 0.0
     for chord in first_last:
-        if remove_note_octave(chord[0]) != scale[0]:
-            continue
-
-        chord_points = 0.5
-        for index in range(len(chord)):
-            if index == 3:  # Ignore flavor note in triad
-                break
-            if (remove_note_octave(chord[index]) not in scale
-                    or not get_note_distance(chord[0], chord[index]) == distances[index]):
-                chord_points = 0.0
-                break
-        points += chord_points
+        if is_correct_triad(chord, key, 0):
+            points += 0.5
 
     return points
 
@@ -237,28 +226,11 @@ def f3(**kwargs):
     '''
     chords = [chord[:-1] for chord in kwargs['chords']]
     key = kwargs['key']
-    scale = kwargs['scale']
-    dominant_triad_distances = get_triad_distances(4, key)[0]
-    dom_scale = get_scale_notes([scale[4], 'maj'])
 
     num_triads = 0
     for chord in chords:
-        triad = True
-
-        if remove_note_octave(chord[0]) != scale[4]:
-            continue
-
-        for i in range(len(chord)):
-            if i == 3:
-                break
-
-            chord_note_no_oct = remove_note_octave(chord[i])
-            if (chord_note_no_oct not in dom_scale
-                    or not get_note_distance(chord[0], chord[i]) == dominant_triad_distances[i]):
-                triad = False
-                break
-
-        num_triads += 1 if triad else 0
+        if is_correct_triad(chord, key, 4):
+            num_triads += 1
 
     return round(num_triads / len(chords), 4)
 
@@ -484,26 +456,13 @@ def f14(**kwargs):
     '''
     chords = kwargs['chords']
     key = kwargs['key']
-    scale = get_scale_notes([kwargs['scale'][4], 'maj'])
 
     first_last = [chords[0][:-1], chords[-1][:-1]]
-    distances = get_triad_distances(4, key)[0]
 
     points = 0.0
     for chord in first_last:
-        if remove_note_octave(chord[0]) != scale[0]:
-            continue
-
-        chord_points = 0.5
-        for index in range(len(chord)):
-            if index == 3:  # Ignore flavor note in triad
-                break
-
-            if (remove_note_octave(chord[index]) not in scale
-                    or not get_note_distance(chord[0], chord[index]) == distances[index]):
-                chord_points = 0.0
-                break
-        points += chord_points
+        if is_correct_triad(chord, key, 4):
+            points += 0.5
 
     return points
 
@@ -540,27 +499,34 @@ def f13(**kwargs):
 
 '''
 HARMONIC PUNISHMENT
+As all fitness_functions strive for a difference return of 1.0,
+the num of fitness functions is used as a basis for harmonic punishment
 '''
 
 
-def hf1(fitness_value, **kwargs):
+def hf1(**kwargs):
     '''
-        If not at least a 0.33 of chords contains tonic triads
-        Return fitness_value / 2
+        If not at least a 0.30 of chords contains tonic triads
+        Return -num(chords) / 3
+        If not at least a 0.15 of chords contains tonic triads
+        Return -num(chords) / 1.5
         Done to heavily punish chord progressions not revolving around tonic
     '''
     portion_of_tonics = f11(**kwargs)
+    chords = kwargs['chords']
 
-    if portion_of_tonics < (1 / 3):
-        return fitness_value / 2
+    if portion_of_tonics < 0.30:
+        return -(len(chords) / 3)
+    elif portion_of_tonics < 0.15:
+        return -(len(chords) / 1.5)
 
-    return fitness_value
+    return 0
 
 
-def hf2(fitness_value, **kwargs):
+def hf2(**kwargs):
     '''
         If a chord is found to be repeated for more than 0.5 of the chord progression
-        Return fitness value / 2 if chord is not tonic - fitness_value / 1.25 if tonic
+        Return -num(chords) / 3 if chord is not tonic or -num(fitness_functions) / 4 if tonic
         Done to heavily punish "monotone" chord progressions
     '''
     chords = [chord[:-1] for chord in kwargs['chords']]
@@ -572,30 +538,29 @@ def hf2(fitness_value, **kwargs):
 
         if repeated > len(chords) / 2:
             if tonic:
-                return fitness_value / 1.25
+                return -(len(chords) / 4)  # Maybe 5
             else:
-                return fitness_value / 2
+                return -(len(chords) / 3)
 
-    return fitness_value
+    return 0
 
 
 def is_correct_triad(chord, key, index):
     distances = get_triad_distances(index, key)
-    scale = []
-
-    try:
-        scale = get_scale_notes([get_scale_notes(key)[index], distances[1]])
-    except ValueError:
-        return False
+    scale = get_scale_notes([get_scale_notes(key)[index], distances[1]])
 
     distances = distances[0]
+    root = chord[0]
 
-    for i in range(len(chord)):
+    if not remove_note_octave(root) == scale[0]:
+        return False
+
+    for i in range(1, len(chord)):
         if i == 3:
             break
 
         chord_note_no_oct = remove_note_octave(chord[i])
-        if chord_note_no_oct not in scale or not get_note_distance(scale[0], chord[i]) == distances[i]:
+        if chord_note_no_oct not in scale or not get_note_distance(root, chord[i]) == distances[i]:
             return False
     return True
 

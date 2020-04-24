@@ -143,7 +143,7 @@ class NonDominatedSorter:
             offspring = apply_crossover(self.population[crossover[0]], self.population[crossover[1]])
 
             # Mutation and mutation probabilitiy
-            if randint(0, 100) <= 20:  # Chance of offspring mutating
+            if randint(0, 100) <= 30:  # Chance of offspring mutating
                 apply_mutation(offspring)
 
             new_population.append(offspring)

@@ -21,7 +21,7 @@ minor_scale_distances = [0, 2, 1, 2, 2, 1, 2, 2]
 # LilyPond needs this to be specified
 # TODO: Check for faults here
 major = [['g', 'd', 'a', 'e', 'b', 'fis'], ['ges', 'des', 'aes', 'ees', 'bes', 'f']]
-minor = [['e', 'b', 'fis', 'cis', 'gis', 'dis', 'ais'], ['ees', 'bes', 'f', 'c', 'g', 'd']]
+minor = [['e', 'b', 'fis', 'cis', 'gis', 'dis'], ['ees', 'bes', 'f', 'c', 'g', 'd']]
 
 # Sets the maximum alloved note division
 # E.g. max_note_divisor = 16 means that 16th notes are the shortest notes available

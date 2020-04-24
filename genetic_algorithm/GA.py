@@ -1,5 +1,5 @@
 from nltk.corpus import cmudict
-from random import choice, randint
+from random import choice
 
 from genetic_algorithm.GLOBAL import max_note_divisor
 from genetic_algorithm.phenotype import Phenotype
@@ -145,6 +145,9 @@ def sentiment_based_major_minor(sent_value):
         Value > 1.0 85/15 chance
     '''
     maj_min = ''
+
+    '''
+    Not really favorable with much probabilities at this point
     if sent_value < -1.0:
         maj_min = 'min' if randint(0, 100) < 95 else 'maj'
     elif sent_value < -0.5:
@@ -155,5 +158,11 @@ def sentiment_based_major_minor(sent_value):
         maj_min = 'min' if randint(0, 100) < 30 else 'maj'
     else:
         maj_min = 'min' if randint(0, 100) < 15 else 'maj'
+    '''
+
+    if sent_value < 0.0:
+        maj_min = 'min'
+    else:
+        maj_min = 'maj'
 
     return maj_min
