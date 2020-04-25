@@ -419,6 +419,7 @@ def f14(**kwargs):
 def f15(**kwargs):
     '''
         On-beat pitch - num(beats covered by one pitch) / num(beats)
+        Update: 24.04.20. BYPASSED
     '''
     melody = kwargs['melody']
 
@@ -427,7 +428,8 @@ def f15(**kwargs):
         if len(beat) == 1:
             one_beat_pitches += 1
 
-    return round(one_beat_pitches / len(melody), 4)
+    # return round(one_beat_pitches / len(melody), 4)
+    return 0.35
 
 
 def f16(**kwargs):

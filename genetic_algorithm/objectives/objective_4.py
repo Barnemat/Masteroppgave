@@ -84,7 +84,7 @@ def f2(**kwargs):
     root = remove_note_octave(chord[0])
 
     if root in scale:
-        return_values = [10, 2, 4, 6, 6, 2, 2]
+        return_values = [10, 3, 5, 7, 7, 3, 3]
 
         for i in range(len(scale)):
             if root == scale[i]:

@@ -417,12 +417,17 @@ def switch_random_chords(phenotype):
     phenotype.genes[1] = chords
 
 
-def apply_mutation(phenotype):
+mutation_tries = 0  # Prevents infinite retry-loops for succesful mutation
+
+
+def apply_mutation(phenotype, reset=False):
     '''
         Applies a mutation function based on probabilites defined below
         Probabilites are defined as the number space between the previous variable and current variable
         max should be 100
     '''
+    global mutation_tries
+
     random_note = 5
     scale_note = 30
     timing_in_beat = 45
@@ -434,6 +439,11 @@ def apply_mutation(phenotype):
     extra_note_chord = 100
 
     p = randint(0, switch_chords)
+
+    mutation_tries = 0 if reset else mutation_tries + 1
+
+    if mutation_tries >= 100:
+        return
 
     if p <= random_note:
         mutate_random_note(phenotype)

@@ -11,7 +11,7 @@ if __name__ == '__main__':
     lyric = Lyric(texts[lyric_title], lyric_title)
 
     population_size = 1000
-    num_generations = 500
+    num_generations = 1000
 
     ga = GA(population_size, lyric)
     print('key', ga.key)

@@ -144,7 +144,7 @@ class NonDominatedSorter:
 
             # Mutation and mutation probabilitiy
             if randint(0, 100) <= 30:  # Chance of offspring mutating
-                apply_mutation(offspring)
+                apply_mutation(offspring, True)
 
             new_population.append(offspring)
 
