@@ -114,10 +114,10 @@ def get_o3_values_as_list(sentiment_value=None):
 
 
 def get_o2_values(sentiment_value=None):
-    if sentiment_value and (sentiment_value >= 0.5 or sentiment_value <= -0.5):
+    if sentiment_value and (sentiment_value > 0.1 or sentiment_value < -0.1):
         values = objective_2_values.copy()
 
-        if sentiment_value < -3:
+        if sentiment_value < -0.75:
             values['pitch_variety'] = 0.20
             values['dissonant_intervals'] = 0.20
             values['count_stability'] = 0.65
@@ -129,7 +129,7 @@ def get_o2_values(sentiment_value=None):
             values['semitone_steps'] = 0.30
             values['whole_notes'] = 0.15
             values['repeated_pitches'] = 0.20
-        elif sentiment_value < -1.5:
+        elif sentiment_value < -0.5:
             values['pitch_variety'] = 0.25
             values['dissonant_intervals'] = 0.20
             values['count_stability'] = 0.60
@@ -139,17 +139,17 @@ def get_o2_values(sentiment_value=None):
             values['semitone_steps'] = 0.25
             values['whole_notes'] = 0.10
             values['repeated_pitches'] = 0.20
-        elif sentiment_value < -0.5:
+        elif sentiment_value < -0.1:
             values['pitch_variety'] = 0.30
             values['dissonant_intervals'] = 0.15
             values['count_stability'] = 0.55
             values['count_direction'] = 0.40
             values['semitone_steps'] = 0.25
-        elif sentiment_value < 1.5:
+        elif sentiment_value < 0.5:
             values['dissonant_intervals'] = 0.00
             values['semitone_steps'] = 0.10
             values['count_direction'] = 0.60
-        elif sentiment_value < 3:
+        elif sentiment_value < 0.75:
             values['count_stability'] = 0.45
             values['count_direction'] = 0.70
             values['rhythmic_variety'] = 0.70
@@ -177,26 +177,26 @@ def get_o2_values(sentiment_value=None):
 
 
 def get_o3_values(sentiment_value=None):
-    if sentiment_value and (sentiment_value >= 0.5 or sentiment_value <= -0.5):
+    if sentiment_value and (sentiment_value >= 0.1 or sentiment_value <= -0.1):
         values = objective_3_values.copy()
 
-        if sentiment_value < -3:
+        if sentiment_value < -0.75:
             values['dominant_triad_chords'] = 0.20
             values['repeated_chords'] = 0.30
             values['num_tonic_triad_chords'] = 0.60
             values['num_distinct_chords'] = 0.35
-        elif sentiment_value < -1.5:
+        elif sentiment_value < -0.5:
             values['dominant_triad_chords'] = 0.20
             values['repeated_chords'] = 0.20
             values['num_tonic_triad_chords'] = 0.50
             values['num_distinct_chords'] = 0.40
-        elif sentiment_value < -0.5:
+        elif sentiment_value < -0.1:
             values['repeated_chords'] = 0.15
             values['num_tonic_triad_chords'] = 0.45
             values['num_distinct_chords'] = 0.40
-        elif sentiment_value < 1.5:
+        elif sentiment_value < 0.5:
             values['num_tonic_triad_chords'] = 0.50
-        elif sentiment_value < 3:
+        elif sentiment_value < 0.75:
             values['repeated_chords'] = 0.20
             values['num_tonic_triad_chords'] = 0.55
             values['num_distinct_chords'] = 0.40

@@ -87,7 +87,10 @@ def get_valid_min_key(note):
     Otherwise they are sharp
     Ref: https://upload.wikimedia.org/wikipedia/commons/f/ff/Circle_of_fifths_deluxe_4_de.svg
     '''
+    return [note[choice([0, 2])]]
 
+    # Removed for the time being
+    # Don't have time to implement support for double flats etc. in chord checking
     if note[0] + 'is' in minor[0]:
         return [note[0] + 'is']
     elif note[-1] + 'es' in minor[1]:
@@ -102,7 +105,10 @@ def get_valid_maj_key(note):
     Otherwise they are flat
     Ref: https://upload.wikimedia.org/wikipedia/commons/f/ff/Circle_of_fifths_deluxe_4_de.svg
     '''
+    return [note[choice([0, 2])]]
 
+    # Removed for the time being
+    # Don't have time to implement support for double flats etc. in chord checking
     if note[0] + 'is' in major[0]:
         return [note[0] + 'is']
     elif note[-1] + 'es' in major[1]:
@@ -160,7 +166,7 @@ def sentiment_based_major_minor(sent_value):
         maj_min = 'min' if randint(0, 100) < 15 else 'maj'
     '''
 
-    if sent_value < 0.0:
+    if sent_value <= 0.0:
         maj_min = 'min'
     else:
         maj_min = 'maj'

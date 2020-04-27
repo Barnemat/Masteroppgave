@@ -10,7 +10,10 @@ from genetic_algorithm.GLOBAL import (
     max_note_divisor,
     remove_note_timing,
     get_note_abs_index,
-    min_notes
+    min_notes,
+    get_triad_distances,
+    get_key_sharps_flats,
+    absolute_note_list
 )
 
 '''''''''''''''
@@ -347,10 +350,47 @@ def mutate_random_chord(phenotype, root=None):
 def mutate_scale_note_chord(phenotype):
     '''
     Finds a random chord root from scale, and generates a valid triad chord,
-    with a possibility for an extra note
+    with no possibility for an extra note
     '''
-    root = get_random_scale_note(phenotype.key, '', True)
-    mutate_random_chord(phenotype, root)
+    chords = phenotype.genes[1].copy()
+    scale = get_scale_notes(phenotype.key)
+    root = choice(scale)
+    octave = choice(allowed_chord_octaves)
+    tries = 0
+    while get_note_abs_index(root + octave) < get_note_abs_index(min_notes[1]):
+        octave = choice(allowed_chord_octaves)
+        root = choice(scale)
+        tries += 1
+
+        if tries == 20:
+            apply_mutation(phenotype)
+            return
+
+    chord = [root + octave]
+    distances = get_triad_distances(scale.index(root), phenotype.key)
+    root_note_index = get_note_abs_index(root + octave)
+    root_sharp_flats = get_key_sharps_flats([root, distances[1]])
+
+    for i in range(1, 3):
+        next_note = absolute_note_list[root_note_index + distances[0][i]]
+
+        if isinstance(next_note, list):
+            next_note = next_note[0] if root_sharp_flats == 'is' else next_note[-1]
+
+        chord.append(next_note)
+
+    new_chord = '< '
+
+    for element in chord:
+        new_chord += element + ' '
+
+    new_chord = new_chord + '>'
+
+    index = randint(0, len(chords) - 1)
+    timing = chords[index].replace('< ', '').replace('>', '').split(' ')[-1]
+
+    chords[index] = new_chord + timing
+    phenotype.genes[1] = chords
 
 
 def mutate_extra_note_in_chord(phenotype):

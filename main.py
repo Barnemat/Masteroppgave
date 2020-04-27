@@ -7,11 +7,11 @@ from random import randint, choice
 
 if __name__ == '__main__':
     texts = load_lyrics('/lyrics/')
-    lyric_title = 'henry-martin'
+    lyric_title = 'stackolee'
     lyric = Lyric(texts[lyric_title], lyric_title)
 
     population_size = 1000
-    num_generations = 1000
+    num_generations = 2000
 
     ga = GA(population_size, lyric)
     print('key', ga.key)
