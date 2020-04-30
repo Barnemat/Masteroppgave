@@ -1,12 +1,9 @@
-import os
-import nltk
 import string
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
-from nltk import tokenize
-from random import choice
+from statistics import mean
 
-from '../load_and_store.py' import load_lyrics # TODO FIX
-from cosine_similarity import get_cosine_similarities
+from load_and_store import load_lyrics  # TODO FIX
+from sentiment_analysis.cosine_similarity import get_cosine_similarities
 
 # Add more cleaning, if needed
 def string_cleaner(sentence):
@@ -51,7 +48,7 @@ def clean_lyric(lyric):
 def lyric_analyser(sentences, directory = None, lyric = None):
   if not directory and not lyric: return
 
-  lyrics = load_lyrics(directory)
+  lyrics = load_lyrics(directory) if directory else lyric
   sid = SentimentIntensityAnalyzer()
 
   for title in lyrics:
@@ -91,7 +88,9 @@ def lyric_analyser(sentences, directory = None, lyric = None):
     print('From find_sentiment: ', data) # Find sentiment scans each line in the lyric independently
     #print('Normalized: ', normalize(data, -4, 4))
     print('')
-    
+
+    return data
+
 
 # Result based on accumulated compound values from sentences
 # Extra negative and extra positive values are introduced
@@ -149,24 +148,26 @@ def find_sentiment(scores):
 # Extra negative and extra positive values are introduced
 def find_sentiment_compounds(scores, lyric_scores = None):
   neg_threshold = -0.05 # originaly -0.05
-  ex_neg_threshold = -0.45 # novel
+  ex_neg_threshold = -0.40 # novel
   pos_threshold = 0.05 # originaly 0.05
-  ex_pos_threshold = 0.75 # novel
+  ex_pos_threshold = 0.8 # novel
   lines = len(scores)
 
   # defines boost values for extra negative/positive lines
   neg_multiplier = 1.5
-  pos_multiplier = 1.2
+  pos_multiplier = 1.0
   ex_neg_multiplier = 2
-  ex_pos_multiplier = 1.7
+  ex_pos_multiplier = 1.25
 
   compounds = []
-
   i = 1
   for score in scores:
     compound = score['compound']
-    print(i, score)
-    
+    if compound == 0:
+        continue
+
+    # print(i, score)
+
     if compound < neg_threshold:
       if compound < ex_neg_threshold:
         compound *= ex_neg_multiplier
@@ -178,36 +179,22 @@ def find_sentiment_compounds(scores, lyric_scores = None):
       else:
         compound *= pos_multiplier
 
-    if compound >= pos_threshold or compound <= neg_threshold:
-      
-      if compound > 1:
-        compound = 1
-      elif compound < -1:
-        compound = -1
-      
-      compounds.append(compound)
-
+    compounds.append(compound)
     i += 1
-  #print(compounds)
+  # print(compounds)
+  # print([normalize_compounds(compounds, -1, 1)] + [lyric_scores['compound']])
 
-  print(normalize_compounds([normalize_compounds(compounds, -1, 1)] + [lyric_scores['compound']], -4, 4))
+  return round(normalize_compounds(compounds, -1, 1), 1)
 
-  # Kanskje også fjerne nøytral helt, men si at nøytral gir (noe) større sannsynlighet for dur?
-  # neu = acc_sentences['neu'] / 2
-  # acc_sentences['neu'] = 0.0
-  # acc_sentences['pos'] += neu
-  # acc_sentences['neg'] += neu
-  #return chances
-  return compounds
 
 def normalize_compounds(data, a, b, x = None):
-  x_min = -1
-  x_max = 1
+  x_min = min(data) if min(data) < -1 else -1
+  x_max = max(data) if max(data) > 1 else 1
 
   x_max_min = x_max - x_min if x_max - x_min != 0 else x_max
 
-  x = x if x else sum(data) / len(data)
-  return a + ((x - x_min) * (b - a) / (x_max_min))
+  x = x if x else mean(data)
+  return a + (((x - x_min) * (b - a)) / (x_max_min))
 
 # Min-Max Feature scaling
 # TODO Gjør mer effektiv, hvis brukt flittig

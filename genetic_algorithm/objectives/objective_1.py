@@ -1,5 +1,11 @@
 from genetic_algorithm.objectives.objective import Objective
-from genetic_algorithm.GLOBAL import get_scale_notes, remove_note_timing, remove_note_octave, get_note_distance
+from genetic_algorithm.GLOBAL import (
+    get_scale_notes,
+    remove_note_timing,
+    remove_note_octave,
+    get_note_distance,
+    get_note_abs_index
+    )
 
 
 class Objective1(Objective):
@@ -72,7 +78,8 @@ class Objective1(Objective):
                     scale_pitches=scale_pitches,
                     non_scale_pitches=non_scale_pitches,
                     ornament_notes=ornament_notes,
-                    measure=measure
+                    measure=measure,
+                    time=int(time_signature[0])
                 )
 
             # print('Measure:', measure)
@@ -88,6 +95,8 @@ def get_chord_pitches(measure):
     '''
         In chord pitch classification octaves should be ignored in the classification,
         as chord ocatave range != melody octave range
+
+        IMPORTANT: Possible change from Olseng: Only tonic and dominant of chord are counted index=0 and index=2
     '''
 
     melody = measure[0]
@@ -97,12 +106,20 @@ def get_chord_pitches(measure):
 
     for note in melody:
         no_octave_note = remove_note_octave(note)
-        for chord_note in chord:
-            no_octave_chord_note = remove_note_octave(chord_note)
+        for chord_note_index in range(len(chord)):
+            no_octave_chord_note = remove_note_octave(chord[chord_note_index])
 
             if no_octave_chord_note == no_octave_note:
                 chord_pitches.append(note)
                 break
+
+            '''
+            if chord_note_index == 0 or chord_note_index == 2:  # Implements proposed change (tonic/dominant)
+
+                if no_octave_chord_note == no_octave_note:
+                    chord_pitches.append(note)
+                    break
+            '''
 
     return chord_pitches
 
@@ -143,11 +160,11 @@ def get_neighbour_tones(measure, chord_notes, notes):
     return neighbour_tones
 
 
+'''
 def get_chord_root_fifth(chord_notes):
-    '''
         Helping function for f4 and f5
         # TODO: Find out if function is needed elsewhere
-    '''
+        Currently deprecated (since chords are redesigned)
     # Sort octaves in different parts
     commas = []
     clean = []
@@ -182,7 +199,7 @@ def get_chord_root_fifth(chord_notes):
         root_scale = get_scale_notes([root, 'min'])
 
     return [root, root_scale[4]]
-
+'''
 
 '''
     **kwargs:
@@ -200,17 +217,18 @@ def f1(**kwargs):
         stabilizes melody to revolve around chord
         non-harmonic-pitches < chord_pitches
         = +1 fitness score
+        # TODO: Perhaps <= and not just <
     '''
-    return 1 if len(kwargs['scale_pitches'] + kwargs['non_scale_pitches']) < len(kwargs['chord_pitches']) else 0
+    return 1 if len(kwargs['scale_pitches'] + kwargs['non_scale_pitches']) <= len(kwargs['chord_pitches']) else 0
 
 
 def f2(**kwargs):
     '''
         a melody where many notes that resolve in chords does not appear in key is not good
         ornament_notes <= scale_pitches
-        = +1 fitness (combined a three functions from Olseng, Should maybe up number to +3 to account for that)
+        = +1 fitness (combined three functions from Olseng, Should maybe up number to +3 to account for that)
     '''
-    return 1 if len(kwargs['ornament_notes']) <= len(kwargs['scale_pitches']) else 0
+    return 2 if len(kwargs['ornament_notes']) <= len(kwargs['scale_pitches']) else 0
 
 
 def f3(**kwargs):
@@ -225,7 +243,7 @@ def f3(**kwargs):
 def f4(**kwargs):
     '''
         Added back from Wu:
-        at least one root or fifth of chord
+        at least one root or fifth of chord (tonic or dominant)
         = +1 fitness score
     '''
     chord_notes = kwargs['measure'][1]
@@ -234,10 +252,10 @@ def f4(**kwargs):
     if len(chord_notes) < 1 or len(melody) < 1:
         return 0
 
-    root_fifth = get_chord_root_fifth(chord_notes)
+    root_fifth = [remove_note_octave(chord_notes[0]), remove_note_octave(chord_notes[2])]
 
     for note in kwargs['scale_pitches'] + kwargs['non_scale_pitches']:
-        if note in root_fifth:
+        if remove_note_octave(note) in root_fifth:
             return 1
 
     return 0
@@ -256,9 +274,9 @@ def f5(**kwargs):
     if len(chord_notes) < 1 or len(melody) < 1:
         return 0
 
-    root_fifth = get_chord_root_fifth(chord_notes)
+    root_fifth = [remove_note_octave(chord_notes[0]), remove_note_octave(chord_notes[2])]
 
-    if melody[0] in root_fifth:
+    if remove_note_octave(melody[0]) in root_fifth:
         return 1
 
     return 0
@@ -278,12 +296,13 @@ def f7(**kwargs):
         One jump > 7 < 13 is allowed in each measure, as opposed to Olseng and Wu
         if (num_intervals of size 2 with semitone span > 7) > 1 or span > 12:
             sum(interval span for interval in intervals if span > 7)
+        Update 09.04.: Testing no jump > 7 < 13 is allowed
     '''
 
     melody = kwargs['measure'][0]
     fitness_score = 0
 
-    allow = True
+    allow = False
     for index in range(len(melody) - 1):
         note = melody[index]
         next_note = melody[index + 1]
@@ -303,13 +322,36 @@ def f7(**kwargs):
 
 def f8(**kwargs):
     '''
-        # TODO: Decide if augmented 9th is actually that bad
+        Awards measures with at least numerator amount of notes from time_signature
+        Fitness +2
     '''
-    return 0
+    time = kwargs['time']
+    notes = kwargs['scale_pitches'] + kwargs['non_scale_pitches'] + kwargs['chord_pitches']
+
+    return 2 if len(notes) >= time else 0
 
 
 def f9(**kwargs):
     '''
-        # TODO: Decide if local melody and text fitness should be here or other objective
+        If measure contains only one note
+        Fitness -1
     '''
-    return 0
+    notes = kwargs['scale_pitches'] + kwargs['non_scale_pitches'] + kwargs['chord_pitches']
+
+    return -1 if len(notes) == 1 else 0
+
+
+'''
+No longer needed, as this is defined in initial note generation
+def f9(**kwargs):
+
+        Punish notes that are lower than g
+        These notes heavily interfere with chords, and are estecially unpleasing in notation
+        Should have been defined elsewhere, but now fitness is easier
+
+    all_notes = kwargs['chord_pitches'] + kwargs['scale_pitches'] + kwargs['non_scale_pitches']
+    return -len([
+        note for note in all_notes if not note.startswith('r')
+        and get_note_abs_index(note) <= get_note_abs_index('g')
+    ])
+'''

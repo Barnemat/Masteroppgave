@@ -3,8 +3,9 @@
 '''
 from genetic_algorithm.phenotype import Phenotype
 from random import randint, choice
-from math import ceil
+from math import ceil, floor
 from copy import deepcopy
+from genetic_algorithm.GLOBAL import get_note_timing, accurate_beat_counter
 
 
 def get_num_syls_in_melody(melody):
@@ -22,7 +23,7 @@ def get_num_syls_in_melody(melody):
 
 
 def clean_chords(chords, max_chords):
-    while len(chords) > max_chords:
+    while len(chords) > max_chords + 1:
         chords.pop()
     return chords
 
@@ -41,6 +42,15 @@ def clean_melody(melody, num_syls):
         del new_melody[-1][-1]
 
     return new_melody
+
+
+def add_beats_for_dot_notes(melody):
+    beats_to_add = accurate_beat_counter(melody, decimals=True)  # Likely retired
+    while beats_to_add > 0:
+        melody.insert(randint(0, len(melody) - 1), [])
+        beats_to_add -= 1
+
+    return melody
 
 
 def get_melody_cut(melody, num_beats_cut):
@@ -90,17 +100,16 @@ def get_melody_cut(melody, num_beats_cut):
         while len(melody) > 0 and len(melody[0]) == 0:
             melody.pop(0)
 
-    return cut
+    return add_beats_for_dot_notes(cut)
 
 
-def get_chord_cut(chords, num_chords, num_beats, time_signature):
+def get_chord_cut(chords, num_chords, num_measures):  # MAybe append random chords when len(chords) < chords_to_cut
     '''
         Returns a cut of chords
         IMPORTANT:
         Only use temp chords, because function makes in-place modifications to list which are not returned
     '''
     cut = []
-    num_measures = int(ceil(num_beats / time_signature))
     chords_to_cut = num_measures - num_chords
 
     chords_to_cut = chords_to_cut if chords_to_cut <= len(chords) else len(chords)
@@ -110,10 +119,36 @@ def get_chord_cut(chords, num_chords, num_beats, time_signature):
     return cut
 
 
+def get_melody_as_measures(mel, time):
+    melody = mel.copy()
+    measures = []
+
+    while len(melody) > 0:
+        measure = []
+        for _ in range(time):
+            if len(melody) == 0:
+                break
+
+            measure.append(melody.pop(0))
+        measures.append(measure)
+    return measures
+
+
+def remove_measures_from_melody(melody):
+    beats = []
+
+    for measure in melody:
+        for beat in measure:
+            beats.append(beat)
+
+    return beats
+
+
 def crossover_random_beats(p1, p2):
     '''
         Takes random number of beats from both phenotypes and combines them
         Empty beats are always added to previous note (or rest)
+        DEPRECATED: 20.04.20.
     '''
     time_signature = int(p1.time_signature[0])
     num_syls = p1.num_syllables
@@ -142,11 +177,13 @@ def crossover_random_beats(p1, p2):
         melody_genes.extend(melody_cut)
 
         chord_copy = [] if len(current_chords) > 0 else current_pheno.genes[1][:]
+        len_melody = accurate_beat_counter(melody_genes)
+        num_measures = int(ceil(len_melody / time_signature))
+
         chord_cut = get_chord_cut(
-            current_chords if len(current_chords) > 0 else [choice(chord_copy)],
+            current_chords if len(current_chords) > 0 else [choice(chord_copy) for _ in range(num_measures)],
             len(chord_genes),
-            len(melody_genes),
-            time_signature
+            num_measures
         )
 
         chord_genes.extend(chord_cut)
@@ -157,16 +194,26 @@ def crossover_random_beats(p1, p2):
                 p2_melody = p2_melody[len(melody_cut):]
             else:
                 p2_melody = []
+
+            if len(p2_chords) > len(chord_cut):
+                p2_chords = p2_chords[len(chord_cut):]
+            else:
+                p2_chords = []
         else:
             if len(p1_melody) > len(melody_cut):
                 p1_melody = p1_melody[len(melody_cut):]
             else:
                 p1_melody = []
 
+            if len(p1_chords) > len(chord_cut):
+                p1_chords = p1_chords[len(chord_cut):]
+            else:
+                p1_chords = []
+
         note_count = get_num_syls_in_melody(melody_genes)
         if note_count >= num_syls:
             melody_genes = clean_melody(melody_genes, num_syls)
-            chord_genes = clean_chords(chord_genes, int(len(melody_genes) / time_signature))
+            chord_genes = clean_chords(chord_genes, accurate_beat_counter(melody_genes) / time_signature)
             break
 
         current_pheno = p1 if current_pheno == p2 else p2
@@ -174,14 +221,116 @@ def crossover_random_beats(p1, p2):
     return [melody_genes, chord_genes]
 
 
-def crossover_random_measures(p1, p2):
+def shuffle_measure(measure, shuffle_measure, time_signature):
     '''
-        # TODO: Implement func
-        Takes random number of measures from both phenotypes and combines them
-        Empty beats are always added to previous note (or rest)
-        Empty beats makes some beats span multiple measures, and this must be handled!
+        Finds random max number of beats in the measure and swaps them with beats from other measure
+        Done to increase gene spread
     '''
-    pass
+    max_beats = randint(1, time_signature)
+
+    new_measure = measure.copy()
+    num_swapped = 0
+    for i in range(max_beats):
+        if len(measure) <= i or len(shuffle_measure) <= i:
+            break
+
+        if len(measure[i]) == 0 or len(shuffle_measure[i]) == 0:
+            continue
+
+        if accurate_beat_counter([measure[i]], no_ceil=True) == accurate_beat_counter([shuffle_measure[i]], no_ceil=True):
+            new_measure[i] = shuffle_measure[i]
+            num_swapped += 1
+
+    return new_measure, num_swapped
+
+
+def crossover_random_measures(p1, p2, shuffle=False):
+    '''
+        Takes measures from both phenotypes and combines them, systematically first, randomly later
+        to fill in for remaining syllables
+
+        First meausure from one phenotype, second measure from other phenotype, third measure from first phenotype etc.
+    '''
+    time_signature = int(p1.time_signature[0])
+    num_syls = p1.num_syllables
+
+    melody_genes = []
+    chord_genes = []
+
+    p1_melody = get_melody_as_measures(p1.genes[0], time_signature)
+    p1_chords = p1.genes[1][:]
+    p2_melody = get_melody_as_measures(p2.genes[0], time_signature)
+    p2_chords = p2.genes[1][:]
+
+    current_pheno = choice([p1, p2])
+    note_count = 0
+    for i in range(min(len(p1_melody), len(p2_melody))):
+        current_melody = p1_melody if current_pheno == p1 else p2_melody
+        current_chords = p1_chords if current_pheno == p1 else p2_chords
+        next_melody = p2_melody if current_melody == p1_melody else p1_melody
+        next_chords = p2_chords if current_melody == p1_chords else p1_chords
+
+        current_pheno = choice([p1, p2])
+
+        if i >= len(current_melody) or i >= len(current_chords):
+            break
+
+        measure = current_melody[i]
+        chord = current_chords[i]
+
+        if shuffle and i < len(next_melody):
+            shuffled_measure = shuffle_measure(measure, next_melody[i], time_signature)
+            measure = shuffled_measure[0]
+
+            if shuffled_measure[1] >= time_signature / 2 and i < len(next_chords):
+                chord = next_chords[i] if shuffled_measure[1] > time_signature / 2 or randint(1, 100) <= 50 else chord
+
+        if accurate_beat_counter(measure, True) != time_signature:
+            break
+
+        melody_genes.append(measure)
+        chord_genes.append(chord)
+
+        note_count += get_num_syls_in_melody(measure)
+
+        if note_count >= num_syls:
+            break
+
+    while note_count < num_syls:
+        current_melody = p1_melody if current_pheno == p1 else p2_melody
+        current_chords = p1_chords if current_pheno == p1 else p2_chords
+        next_melody = p2_melody if current_melody == p1_melody else p1_melody
+        next_chords = p2_chords if current_melody == p1_chords else p1_chords
+
+        current_pheno = choice([p1, p2])
+
+        rand_index = randint(0, len(current_melody) - 1)
+
+        try:
+            measure = current_melody[rand_index]
+            chord = current_chords[rand_index]
+        except IndexError:
+            continue
+
+        if shuffle and i < len(next_melody):
+            shuffled_measure = shuffle_measure(measure, next_melody[i], time_signature)
+            measure = shuffled_measure[0]
+
+            if shuffled_measure[1] >= time_signature / 2 and i < len(next_chords):
+                chord = next_chords[i] if shuffled_measure[1] > time_signature / 2 or randint(1, 100) <= 50 else chord
+
+        if accurate_beat_counter(measure, True) != time_signature:
+            continue
+
+        melody_genes.append(measure)
+        chord_genes.append(chord)
+
+        note_count += get_num_syls_in_melody(measure)
+
+    melody_genes = clean_melody(remove_measures_from_melody(melody_genes), num_syls)
+    chord_genes = clean_chords(chord_genes, accurate_beat_counter(melody_genes) / time_signature)
+
+    return [melody_genes, chord_genes]
 
 
 def apply_crossover(phenotype1, phenotype2):
@@ -189,11 +338,8 @@ def apply_crossover(phenotype1, phenotype2):
         Chooses which crossover function to apply to the two input phenotypes
         Return new phenotype with the resulting genes
     '''
-
-    # Temp - Add more possibilities as they are implemented
-    genes = crossover_random_beats(deepcopy(phenotype1), deepcopy(phenotype2))
-    # print(phenotype1.genes)
-    # print(genes)
+    shuffle = randint(1, 100) >= 50
+    genes = crossover_random_measures(deepcopy(phenotype1), deepcopy(phenotype2), shuffle)
     return Phenotype(
         phenotype1.key,
         phenotype1.num_syllables,

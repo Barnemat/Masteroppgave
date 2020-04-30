@@ -2,6 +2,8 @@
 Contains some constant values that should be easily accessable from all files
 '''
 
+from math import ceil
+
 # All notes and possible semitones (physically)
 # E.g. a-b could be either A sharp or B flat in music, but they have the same frequencies
 possible_notes = ['a', 'a-b', 'b', 'c', 'c-d', 'd', 'd-e', 'e', 'f', 'f-g', 'g', 'g-a']
@@ -19,7 +21,7 @@ minor_scale_distances = [0, 2, 1, 2, 2, 1, 2, 2]
 # LilyPond needs this to be specified
 # TODO: Check for faults here
 major = [['g', 'd', 'a', 'e', 'b', 'fis'], ['ges', 'des', 'aes', 'ees', 'bes', 'f']]
-minor = [['e', 'b', 'fis', 'cis', 'gis', 'dis', 'ais'], ['ees', 'bes', 'f', 'c', 'g', 'd']]
+minor = [['e', 'b', 'fis', 'cis', 'gis', 'dis'], ['ees', 'bes', 'f', 'c', 'g', 'd']]
 
 # Sets the maximum alloved note division
 # E.g. max_note_divisor = 16 means that 16th notes are the shortest notes available
@@ -30,10 +32,14 @@ max_note_divisor = 16
 allowed_melody_octaves = ['', '\'', '\'\'']
 allowed_chord_octaves = [',', '']
 
+min_melody_note = 'g'
+min_chord_note = 'a,'
+min_notes = [min_melody_note, min_chord_note]
+
 # Chords usually found in a given scale follow some rules, as to their tonality for given notes in scales
 # Corresponding harmonies(chords) for a note in scales:
 major_scale_chords = ['maj', 'min', 'min', 'maj', 'maj', 'min', 'dim']
-minor_scale_chords = ['min', 'dim', 'maj-aug', 'min', 'maj', 'maj', 'dim']
+minor_scale_chords = ['min', 'dim', 'maj_aug', 'min', 'maj', 'maj', 'dim']
 
 # Different triad distances from root note. Same pattern as for scales
 maj_triad_distances = [0, 4, 7]
@@ -66,6 +72,25 @@ absolute_note_list = get_absolute_note_list()
 '''''''''''''''
 GLOBAL FUNCTIONS
 '''''''''''''''
+
+
+def get_triad_distances(index, key):
+    '''
+        Returns the triad distances for the given note index in major/minor scales
+    '''
+
+    maj_min = key[1]
+    scale_chords = major_scale_chords if maj_min == 'maj' else minor_scale_chords
+    chord = scale_chords[index]
+
+    if chord == 'min':
+        return [min_triad_distances, 'min']
+    elif chord == 'dim':
+        return [dim_distances, 'min']
+    elif chord == 'maj_aug':
+        return [maj_aug, 'maj']
+    else:
+        return [maj_triad_distances, 'maj']
 
 
 # Should be pregerenerated if time
@@ -122,6 +147,17 @@ def get_note_timing(note):
     return note + dotted
 
 
+def get_note_dec_timing(note):
+    timing = get_note_timing(note)
+
+    if timing.endswith('.'):
+        timing = int(timing[:-1]) + (int(timing[:-1]) * 2)
+    else:
+        timing = int(timing)
+
+    return 4 / timing
+
+
 def remove_note_octave(note):
     return ''.join([char for char in note if char.isalpha() or char.isnumeric()])
 
@@ -161,3 +197,46 @@ def get_note_distance(note1, note2):
         return 0
 
     return abs(note1_index - note2_index)
+
+
+def beat_count(note):
+    timing = get_note_timing(note)
+    dotted = timing.endswith('.')
+
+    if dotted:
+        timing = int(timing[:-1])
+        dot = timing * 2
+
+        timing = (4 / timing) + (4 / dot)
+    else:
+        timing = 4 / int(timing)
+
+    return timing
+
+
+def accurate_beat_counter(melody, no_ceil=False):
+    count = 0.0
+
+    for beat in melody:
+        for note in beat:
+            if isinstance(note, list):
+                for mel_note in note:
+                    count += beat_count(mel_note)
+            else:
+                count += beat_count(note)
+
+    return float(count) if no_ceil else int(ceil(count))
+
+
+def get_all_notes(melody):
+    notes = []
+
+    for beat in melody:
+        for note in beat:
+            if isinstance(note, list):
+                for mel_note in note:
+                    notes.append(mel_note)
+            else:
+                notes.append(note)
+
+    return notes

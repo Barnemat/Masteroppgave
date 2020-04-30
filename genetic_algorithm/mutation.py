@@ -9,7 +9,11 @@ from genetic_algorithm.GLOBAL import (
     allowed_chord_octaves,
     max_note_divisor,
     remove_note_timing,
-    get_note_abs_index
+    get_note_abs_index,
+    min_notes,
+    get_triad_distances,
+    get_key_sharps_flats,
+    absolute_note_list
 )
 
 '''''''''''''''
@@ -38,9 +42,19 @@ def get_random_note_indices(melody):
 
 def get_random_scale_note(key, timing, chord=False):
     note_list = get_scale_notes(key)
+    new_note = choice(note_list)
+    octave = choice(allowed_chord_octaves if chord else allowed_melody_octaves)
 
-    new_note = choice(note_list) + choice(allowed_chord_octaves if chord else allowed_melody_octaves) + timing
-    return new_note
+    if chord:
+        while get_note_abs_index(new_note + octave) < get_note_abs_index(min_notes[1]):
+            new_note = choice(note_list)
+            octave = choice(allowed_chord_octaves)
+    else:
+        while get_note_abs_index(new_note + octave) < get_note_abs_index(min_notes[0]):
+            new_note = choice(note_list)
+            octave = choice(allowed_melody_octaves)
+
+    return new_note + octave + timing
 
 
 def get_random_note_before_index(melody, beat, note, melisma_index):
@@ -170,7 +184,58 @@ def mutate_scale_note(phenotype):
 
 
 def mutate_timing_in_beat(phenotype):
-    pass
+    '''
+        Finds a random beat with more than one note and swaps the timing of the notes
+    '''
+    melody = phenotype.genes[0].copy()
+
+    beats = []  # len(beat) > 1
+    for index in range(len(melody)):
+        if len(melody[index]) > 1:
+            beats.append(index)
+
+    if len(beats) == 0:
+        apply_mutation(phenotype)  # Try other mutation type
+        return
+
+    timing_1, timing_2 = 0, 0
+    tries_left = len(melody)
+    while timing_1 == timing_2 and tries_left > 0:
+        beat_index = choice(beats)
+        beat = melody[beat_index]
+
+        note_indices = [i for i in range(len(beat))]
+        note1_index = choice(note_indices)
+        note_indices.remove(note1_index)
+        note2_index = choice(note_indices)
+
+        note1 = beat[note1_index]
+        note2 = beat[note2_index]
+
+        mel_index_1 = -1
+        if isinstance(note1, list):
+            mel_index_1 = randint(0, len(note1) - 1)
+
+        mel_index_2 = -1
+        if isinstance(note2, list):
+            mel_index_2 = randint(0, len(note2) - 1)
+
+        timing_1 = get_note_timing(note1 if mel_index_1 < 0 else note1[mel_index_1])
+        timing_2 = get_note_timing(note2 if mel_index_2 < 0 else note2[mel_index_2])
+
+        tries_left -= 1
+
+    if mel_index_1 > -1:
+        melody[beat_index][note1_index][mel_index_1] = remove_note_timing(note1[mel_index_1]) + timing_2
+    else:
+        melody[beat_index][note1_index] = remove_note_timing(note1) + timing_2
+
+    if mel_index_2 > -1:
+        melody[beat_index][note2_index][mel_index_2] = remove_note_timing(note2[mel_index_2]) + timing_1
+    else:
+        melody[beat_index][note2_index] = remove_note_timing(note2) + timing_1
+
+    phenotype.genes[0] = melody
 
 
 def mutate_divide_note(phenotype):
@@ -193,7 +258,8 @@ def mutate_divide_note(phenotype):
         note, beat = get_random_note_indices(melody)
         tries += 1
 
-        if tries > 100:
+        if tries > 50:
+            apply_mutation(phenotype)  # Try other mutation type
             return
 
     note_no_timing = remove_note_timing(melody[beat][note])
@@ -208,6 +274,7 @@ def mutate_divide_note(phenotype):
 
     if melody[beat][note].endswith('1') or melody[beat][note].endswith('2'):
         if len(melody) >= beat + 1:
+            apply_mutation(phenotype)  # Try other mutation type
             return
 
         melody.pop(beat + 1)
@@ -237,6 +304,7 @@ def switch_random_notes(phenotype):
             switch_beat, switch_note, switch_mel_index = get_random_note_after_index(melody, beat, note, melisma_index)
 
     if not switch_beat:
+        apply_mutation(phenotype)  # Try other mutation type
         return
 
     a = melody[beat][note][melisma_index] if melisma_index else melody[beat][note]
@@ -244,6 +312,7 @@ def switch_random_notes(phenotype):
 
     # Don't have time to properly fix error
     if isinstance(a, list) or isinstance(b, list):
+        apply_mutation(phenotype)  # Try other mutation type
         return
 
     if a and b:
@@ -281,10 +350,47 @@ def mutate_random_chord(phenotype, root=None):
 def mutate_scale_note_chord(phenotype):
     '''
     Finds a random chord root from scale, and generates a valid triad chord,
-    with a possibility for an extra note
+    with no possibility for an extra note
     '''
-    root = get_random_scale_note(phenotype.key, '', True)
-    mutate_random_chord(phenotype, root)
+    chords = phenotype.genes[1].copy()
+    scale = get_scale_notes(phenotype.key)
+    root = choice(scale)
+    octave = choice(allowed_chord_octaves)
+    tries = 0
+    while get_note_abs_index(root + octave) < get_note_abs_index(min_notes[1]):
+        octave = choice(allowed_chord_octaves)
+        root = choice(scale)
+        tries += 1
+
+        if tries == 20:
+            apply_mutation(phenotype)
+            return
+
+    chord = [root + octave]
+    distances = get_triad_distances(scale.index(root), phenotype.key)
+    root_note_index = get_note_abs_index(root + octave)
+    root_sharp_flats = get_key_sharps_flats([root, distances[1]])
+
+    for i in range(1, 3):
+        next_note = absolute_note_list[root_note_index + distances[0][i]]
+
+        if isinstance(next_note, list):
+            next_note = next_note[0] if root_sharp_flats == 'is' else next_note[-1]
+
+        chord.append(next_note)
+
+    new_chord = '< '
+
+    for element in chord:
+        new_chord += element + ' '
+
+    new_chord = new_chord + '>'
+
+    index = randint(0, len(chords) - 1)
+    timing = chords[index].replace('< ', '').replace('>', '').split(' ')[-1]
+
+    chords[index] = new_chord + timing
+    phenotype.genes[1] = chords
 
 
 def mutate_extra_note_in_chord(phenotype):
@@ -293,22 +399,35 @@ def mutate_extra_note_in_chord(phenotype):
         # TODO: Choose whether the note should be random (but from scale) or chosen by rules
     '''
     chords = phenotype.genes[1].copy()
+    chord_index = randint(0, len(chords) - 1)
+    chord = chords[chord_index].replace('< ', '').replace('>', '').split(' ')
+    root_key = [chord[0], choice(['maj', 'min'])]
+    timing = chord[-1]
+    chord = chord[:-1]
 
-    if len(chords) == 4:
-        chords = chords[:3]
+    if len(chord) == 4:
+        chord = chord[:3]
 
-    last_note = chords[-1]  # For resolving distance issues
-    new_note = get_random_scale_note(phenotype.key, '', True)
+    last_note = chord[-1]  # For resolving distance issues
+    new_note = get_random_scale_note(root_key, '', True)
 
     tries = 20
     while tries > 0 and get_note_abs_index(new_note) <= get_note_abs_index(last_note):
-        new_note = get_random_scale_note(phenotype.key, '', True)
+        new_note = get_random_scale_note(root_key, '', True)
         tries -= 1
 
     if tries <= 0:
+        apply_mutation(phenotype)  # Try other mutation type
         return
 
-    phenotype.genes[1] = chords
+    chord.append(new_note)
+
+    new_chord = '< '
+
+    for element in chord:
+        new_chord += element + ' '
+
+    phenotype.genes[1][chord_index] = new_chord + '>' + timing
 
 
 def switch_random_chords(phenotype):
@@ -326,6 +445,7 @@ def switch_random_chords(phenotype):
         tries -= 1
 
     if tries <= 0:
+        apply_mutation(phenotype)  # Try other mutation type
         return
 
     a_chord = chords[a]
@@ -337,23 +457,33 @@ def switch_random_chords(phenotype):
     phenotype.genes[1] = chords
 
 
-def apply_mutation(phenotype):
+mutation_tries = 0  # Prevents infinite retry-loops for succesful mutation
+
+
+def apply_mutation(phenotype, reset=False):
     '''
         Applies a mutation function based on probabilites defined below
         Probabilites are defined as the number space between the previous variable and current variable
         max should be 100
     '''
-    random_note = 10
-    scale_note = 35
+    global mutation_tries
+
+    random_note = 5
+    scale_note = 30
     timing_in_beat = 45
     divide_note = 50
-    switch_notes = 65
-    random_chord = 70
+    switch_notes = 60
+    random_chord = 65
     random_scale_note_chord = 85
     switch_chords = 95
     extra_note_chord = 100
 
     p = randint(0, switch_chords)
+
+    mutation_tries = 0 if reset else mutation_tries + 1
+
+    if mutation_tries >= 100:
+        return
 
     if p <= random_note:
         mutate_random_note(phenotype)

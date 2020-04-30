@@ -1,4 +1,5 @@
 import os
+from genetic_algorithm.GLOBAL import get_note_timing
 
 
 class LilyPondFileGenerator:
@@ -62,6 +63,7 @@ class LilyPondFileGenerator:
 
     def get_melody_format(self):
         output = '{\n'
+        output += '\\autoBeamOff\n'
 
         for beat in self.data[0]:
             if len(beat) == 0:
@@ -70,22 +72,27 @@ class LilyPondFileGenerator:
             for note in beat:
                 if isinstance(note, list):
                     first_mel_note = note[0]
-                    sub_mel_notes = note[1:]
+                    sub_mel_notes = ''.join([sub_mel_note + ' ' for sub_mel_note in note[1:]])
+                    stop_beam = False
 
-                    output += first_mel_note + '([ '
+                    for sub_mel_note in note:
+                        timing = get_note_timing(sub_mel_note)
 
-                    for sub_mel_note in sub_mel_notes:
-                        output += sub_mel_note + ' '
+                        if timing.startswith('1') or timing.startswith('2') or timing.startswith('4'):
+                            stop_beam = True
 
-                    output += ']) '
+                    output += first_mel_note + '([ ' if not stop_beam else first_mel_note + '('
+                    output += sub_mel_notes
+                    output += ']) ' if not stop_beam else first_mel_note + ') '
                 else:
                     output += note + ' '
             output += '\n'
 
-        output += '}\n'
+        output += '\\bar \"|.\"}\n'
         output += '\\addlyrics {\n'
 
         for line in self.lyric_syls:
+            line[0][0] = line[0][0].capitalize()
             for word in line:
                 for syl in word:
                     output += syl + ' -- '
@@ -95,9 +102,9 @@ class LilyPondFileGenerator:
         return output + '}\n'
 
     def get_chord_format(self):
-        output = ''
+        output = '\\set Staff.midiMaximumVolume = #0.7\n'
 
         for chord in self.data[1]:
             output += chord + '\n'
 
-        return output
+        return output + '\\bar \"|.\"'

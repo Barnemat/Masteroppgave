@@ -22,6 +22,7 @@ class NonDominatedSorter:
 
         # [0, []], where 0 is the dominated_by_counter and [] is the dominates_list
         self.domination_list = [[0, []] for phoneme in population]
+        self.tournament_winner_indices = []
 
     def set_population_values(self):
         for phenotype in self.population:
@@ -105,7 +106,8 @@ class NonDominatedSorter:
             distance_fix.append([add_index, distances[-1][add_index]])
             distances[-1][add_index] = -inf
 
-        new_fronts.append(new_last_front)
+        if len(new_last_front) > 0:
+            new_fronts.append(new_last_front)
 
         for distance in distance_fix:  # Sets distances to previous distances
             distances[-1][distance[0]] = distance[1]
@@ -138,12 +140,19 @@ class NonDominatedSorter:
                     index = min([front_1, front_2])
                     crossover.append(new_fronts[index][randint(0, len(new_fronts[index]) - 1)])
 
-            new_population.append(apply_crossover(self.population[crossover[0]], self.population[crossover[1]]))
+            offspring = apply_crossover(self.population[crossover[0]], self.population[crossover[1]])
 
-        # Mutation and mutation probabilitiy
-        for phenotype in new_population:
-            if randint(0, 100) <= 5:  # Chance of phenotype mutating
-                apply_mutation(phenotype)
+            # Mutation and mutation probabilitiy
+            if randint(0, 100) <= 30:  # Chance of offspring mutating
+                apply_mutation(offspring, True)
+
+            new_population.append(offspring)
+
+            # Adds indices from crossover (tournament selection winners) to tournament_winner_indices
+            self.tournament_winner_indices = []
+            for index in crossover:
+                if index not in self.tournament_winner_indices:
+                    self.tournament_winner_indices.append(index)
 
         self.population = new_population
         return self.population

@@ -21,15 +21,15 @@ class Objective2(Objective):
 
         self.fitness_functions.extend([
             f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19,
-            f20
+            f20, f21, f22, f23, f24
         ])
 
         if target_values:
             self.target_values = target_values
         else:
             self.target_values = [
-                0.30, 0.50, 0.30, 0.05, 0.025, 0.70, 0.60, 0.30, 0.30, 0.10, 0.40,  # Rhythmic variety
-                0.80, 0.30, 0.50, 0.30, 0.30, 0.30, 0.20, 0.20, 0.10  # Semi-tone value (change with sentiment)
+                0.30, 0.35, 0.35, 0.00, 0.10, 0.60, 0.50, 0.30, 0.30, 0.10, 0.40,  # Rhythmic variety
+                0.80, 0.20, 0.50, 0.40, 0.20, 0.20, 0.10, 0.10, 0.20, 0.10, 0.10, 0.00, 0.40
             ]
 
         '''
@@ -80,11 +80,10 @@ class Objective2(Objective):
                 quanta=quanta
             ), func_num)
             # self.fitness_score += fitness_score
-            fitness_score = round(fitness_score, 4)
             # print(fitness_score)
             func_num += 1
 
-        return fitness_score
+        return round(fitness_score, 4)
 
     def compare_with_target_value(self, value, target_index):
         return 1 - abs(value - self.target_values[target_index])
@@ -135,6 +134,29 @@ def get_quanta(notes):
     return quanta
 
 
+def is_diatonic_distance(note1, note2):
+    '''
+        Helping function for f8
+        Diatonic distances are eihter 2 semitones or 1 semitone between E/F and between B/C
+    '''
+    distance = get_note_distance(note1, note2)
+
+    if distance == 2:
+        return True
+    elif distance != 1:
+        return False
+
+    clean_n1 = remove_note_octave(remove_note_timing(note1))
+    clean_n2 = remove_note_octave(remove_note_timing(note2))
+
+    if (clean_n1 == 'e' and clean_n2 == 'f') or (clean_n1 == 'f' and clean_n2 == 'e'):
+        return True
+    elif (clean_n1 == 'b' and clean_n2 == 'c') or (clean_n1 == 'c' and clean_n2 == 'b'):
+        return True
+
+    return False
+
+
 '''
     **kwargs:
     notes
@@ -149,8 +171,7 @@ def f1(**kwargs):
         Pitch variety - num(distinct pitches) / num(notes)
     '''
     notes = kwargs['notes']
-    pitches = [remove_note_octave(remove_note_timing(x)) for x in notes]
-    distinct_notes = list(set([x for x in pitches]))
+    distinct_notes = list(set([remove_note_octave(remove_note_timing(x)) for x in notes]))
 
     return round(len(distinct_notes) / len(notes), 4)
 
@@ -174,7 +195,7 @@ def f2(**kwargs):
         if not note == 'r' and note_index > max_index:
             max_index = note_index
 
-    if max_index - min_index > note_range:
+    if max_index - min_index > note_range:  # Max value if note range is exceeded
         return 1.0
 
     return round((max_index - min_index) / note_range, 4)
@@ -204,7 +225,7 @@ def f4(**kwargs):
         Non-scale notes - num(pitch not in scale quanta) / quanta
     '''
     notes = [note for note in kwargs['notes']]
-    notes_no_timing = [remove_note_octave(remove_note_timing(note)) for note in notes]
+    notes_no_timing = [remove_note_octave(remove_note_timing(note)) for note in notes if note != 'r']
     scale = kwargs['scale']
     quanta = kwargs['quanta']
 
@@ -228,7 +249,6 @@ Interval Dissonance rating
 
 def f5(**kwargs):
     '''
-        # TODO: MUST USE SCALE
         Dissonant intervals - sum(dissonance rating of intervals) / num(intervals)
         Follows table above
     '''
@@ -306,9 +326,7 @@ def f8(**kwargs):
         note1 = remove_note_timing(interval[0])
         note2 = remove_note_timing(interval[1])
 
-        distance = get_note_distance(note1, note2)
-
-        if distance == 1 or distance == 2:
+        if is_diatonic_distance(note1, note2):
             diatonic_steps += 1
 
     return round(diatonic_steps / len(intervals), 4)
@@ -401,6 +419,7 @@ def f14(**kwargs):
 def f15(**kwargs):
     '''
         On-beat pitch - num(beats covered by one pitch) / num(beats)
+        Update: 24.04.20. BYPASSED
     '''
     melody = kwargs['melody']
 
@@ -409,7 +428,8 @@ def f15(**kwargs):
         if len(beat) == 1:
             one_beat_pitches += 1
 
-    return round(one_beat_pitches / len(melody), 4)
+    # return round(one_beat_pitches / len(melody), 4)
+    return 0.35
 
 
 def f16(**kwargs):
@@ -526,3 +546,77 @@ def f20(**kwargs):
             semitone_steps += 1
 
     return round(semitone_steps / len(intervals), 4)
+
+
+def f21(**kwargs):
+    '''
+        Number of 16th notes - num(16th notes) / num(notes)
+        Excessive number of 16th notes might negatively affect melody flow
+    '''
+    notes = kwargs['notes']
+    count = 0
+
+    for note in notes:
+        if get_note_timing(note) == '16':
+            count += 1
+
+    return round(count / len(notes), 4)
+
+
+def f22(**kwargs):
+    '''
+        Number of whole or dotted whole notes - num(whole (+ dotted whole) notes) / num(notes)
+        Excessive number of whole notes might negatively affect melody flow
+    '''
+    notes = kwargs['notes']
+    count = 0
+
+    for note in notes:
+        timing = get_note_timing(note)
+        if timing == '1' or timing == '1.':
+            count += 1
+
+    return round(count / len(notes), 4)
+
+
+def f23(**kwargs):
+    '''
+        Repeated pitches in patterns of 4
+        More rigorous testing for repeated pitches - looks three steps forward
+    '''
+    notes = kwargs['notes']
+
+    repeated_patterns = 0
+    for index in range(len(notes) - 3):
+        for inner_index in range(index, index + 4):
+            if not notes[index] == notes[inner_index]:
+                break
+
+            if inner_index == index + 3:
+                repeated_patterns += 1
+
+    return round(repeated_patterns / (len(notes) - 3), 4)
+
+
+def f24(**kwargs):
+    '''
+        Returns the portion of melismas that are equal to other melismas
+    '''
+    melody = kwargs['melody']
+
+    melismas = []
+    repeated_melismas = 0
+    for beat in melody:
+        for note in beat:
+            if isinstance(note, list):
+                melisma = str(note)
+
+                if melisma in melismas:
+                    repeated_melismas += 1
+
+                melismas.append(melisma)
+
+    return round(repeated_melismas / len(melismas)) if len(melismas) > 0 else 0.0
+
+
+# TODO: Perhaps punish repeated 16th notes, and especially repeated whole notes

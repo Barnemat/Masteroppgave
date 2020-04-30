@@ -7,6 +7,7 @@ sys.path.append('../') # Finn bedre løsning på dette
 from load_and_store import load_lyrics # Kan fjernes. Input blir fra hoevklasse
 
 # TODO Cmudict-løsningen husker ikke på stor forbokstav
+# TODO: Fix indentation if time. Ha tunga rett i munnen i så fall.
 class SyllableDetector:
   d = cmudict.dict()
   vowels = ['a', 'e', 'i', 'o', 'u', 'y']
