@@ -1,4 +1,5 @@
 from random import choice, randint
+from math import ceil
 
 from genetic_algorithm.GLOBAL import (
     possible_notes,
@@ -81,12 +82,24 @@ class Phenotype:
         num_chords, and especially root are used in special cases (e.g. mutation) where function
         is reused
         '''
-        num_chords = num_chords if num_chords else accurate_beat_counter(melody)
+        num_chords = num_chords if num_chords else ceil(accurate_beat_counter(melody) / int(self.time_signature[0]))
         chords = []
 
         for _ in range(num_chords):
             chord = '< '
-            notes = [root] if root else [self.get_random_note(0, True)[:-1]]
+            notes = [root] if root else []
+
+            if len(notes) == 0:
+                root = self.get_random_note(0, True)[:-1]
+
+                root_index = get_note_abs_index(root)
+                max_root = get_note_abs_index(min_notes[1]) + 12
+                while root_index > max_root:
+                    root = self.get_random_note(0, True)[:-1]
+                    root_index = get_note_abs_index(root)
+
+                notes.append(root)
+
             triad = choice(triads)
 
             note = notes[0]
@@ -158,10 +171,6 @@ class Phenotype:
             while get_note_abs_index(note + octave) < get_note_abs_index(min_notes[0]):
                 note = self.get_rand_note(time, chord_note, only_pitch)
                 octave = choice(allowed_melody_octaves)
-
-        # Sets the chance of a note being dotted
-        # Dotted notes need to be handled to keep time
-        # dotted = '.' if not (time == 16 or time == 1) and not chord_note and not only_pitch and randint(0, 100) < 30 else ''
 
         return note + octave + str(time)
 
@@ -248,5 +257,5 @@ def get_notes_in_measure(measure):
     for beat in measure:
         for note in beat:
             if isinstance(note, list) or not note.startswith('r'):
-                count += 1
+                count += 1 if not isinstance(note, list) else len(note)
     return count

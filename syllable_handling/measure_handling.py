@@ -7,13 +7,6 @@ class MeasureHandler:
         self.syllables = syllabified_lyric
         self.line_syl_nums = [SyllableDetector.count_syllables_line(line) for line in self.syllables]
 
-        # For testing
-        # print(SyllableDetector.count_syllables_lyric(self.syllables))
-
-        '''
-        for line in self.syllables:
-            print(line, SyllableDetector.count_syllables_line(line))
-        '''
         self.descide_3_or_4()
 
         # A bare minimum function for decsiding the time signature to be either 4/4 or 3/4
@@ -36,7 +29,3 @@ class MeasureHandler:
                 self.measure = '4/4'
             else:
                 self.measure = '3/4'
-
-                # print(line_syl_nums)
-                # print(self.line_syl_nums)
-                # print(self.measure)

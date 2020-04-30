@@ -24,18 +24,18 @@ class Objective3(Objective):
         super().__init__()
 
         self.fitness_functions.extend([
-            f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15
+            f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13
         ])
 
         self.harmonic_punishment_functions = [
-            hf1, hf2
+            hf1, hf2, hf3, hf4, hf5
         ]
 
         if target_values:
             self.target_values = target_values
         else:
             self.target_values = [
-                1.00, 1.00, 0.35, 1.00, 1.00, 1.00, 0.60, 0.30, 0.70, 0.60, 0.40, 0.50, 0.35, 0.00, 0.40
+
             ]
 
         self.syllables = syllables
@@ -56,10 +56,15 @@ class Objective3(Objective):
         line_ending_indices = get_line_ending_indices(self.syllables)
         all_notes = get_all_notes(melody)
 
+        ignored_funcs = [5, 11, 12]
+
         func_num = 0
         fitness_score = 0
         for func in self.fitness_functions:
             # print('fitness function:', func_num + 1)
+            if func_num + 1 in ignored_funcs:
+                continue
+
             fitness_score += self.compare_with_target_value(func(
                 melody=melody,
                 chords=chords,
@@ -79,128 +84,13 @@ class Objective3(Objective):
         # print(fitness_score)
 
         for func in self.harmonic_punishment_functions:
-            fitness_score += func(chords=chords, key=key)
+            fitness_score += func(len(self.fitness_functions), chords=chords, key=key, scale=scale)
 
         # print(fitness_score)
         return round(fitness_score, 4)
 
 
 def f1(**kwargs):
-    '''
-        Word in lyric stress and rhythm satisfaction
-        Returns a normalized value for how the syllables in words throughout the lyric
-        satisfies stress constraints from cmudict phonemes
-        The function reward longer notes for primary stress values and shorter notes for no stress values etc.
-    '''
-    notes = [y for x in kwargs['melody'] for y in x if len(x) > 0]
-    syls = [y for x in kwargs['syllables'] for y in x]
-    phonemes = kwargs['phonemes'].copy()
-    # print(notes)
-    # print(syls)
-    # print(phonemes)
-
-    syls_long_vowels_sat = 0.0
-    non_empty_phonemes = 0
-    for syl_index in range(len(syls)):
-        word_notes = []
-
-        if len(notes) == 0:
-            break
-
-        for index in range(len(syls[syl_index])):
-            note = notes.pop(0)
-
-            while not isinstance(note, list) and note.startswith('r'):
-                if len(notes) == 0:
-                    break
-
-                note = notes.pop(0)
-
-            word_notes.append(note)
-
-            if len(notes) == 0:
-                break
-
-        phoneme = phonemes.pop(0)
-
-        if len(phoneme) == 0:
-            continue
-
-        stress_values = [int(x[-1]) for x in phoneme if x[-1].isnumeric()]
-
-        timings = []
-        for index in range(len(word_notes)):
-            timing = ''
-            if isinstance(word_notes[index], list):
-                mel_timings = []
-
-                for mel in word_notes[index]:
-                    if mel.startswith('r'):  # Added security
-                        continue
-
-                    mel_timing = get_note_timing(mel).strip()
-
-                    if mel_timing.endswith('.'):
-                        # Subtracts (almost) arbituary number, but needs to be lower
-                        mel_timing = float(mel_timing[:len(mel_timing) - 1]) - 0.5
-                    else:
-                        mel_timing = float(mel_timing)
-                    mel_timings.append(mel_timing)
-                timing = 4 / sum([4 / x for x in mel_timings])
-            else:
-                timing = get_note_timing(word_notes[index]).strip()
-
-                if timing.endswith('.'):
-                    # Subtracts arbituary number, but needs to be lower
-                    timing = 4 / (float(timing[:len(timing) - 1]) - 0.5)
-                else:
-                    timing = 4 / float(timing)
-
-            timings.append(timing)
-
-        if len(stress_values) != len(timings):
-            continue
-
-        max_timing = max(timings)
-        min_timing = min(timings)
-
-        non_empty_phonemes += 1
-
-        if max_timing == min_timing:
-            syls_long_vowels_sat += 1.0
-            continue
-
-        sat_value = 0.0  # Max 1.0
-        for index in range(len(stress_values)):
-            timing = timings[index]
-            stress_value = stress_values[index]
-            # print(timing, stress_value)
-            if stress_value == 1:  # Primary stress value
-                if timing == max_timing:
-                    sat_value += 1.0
-                elif timing > min_timing:
-                    sat_value += 0.25
-                elif timing == min_timing:
-                    sat_value = 0.0
-            elif stress_value == 2:  # Secondary stress value
-                if timing == max_timing:
-                    sat_value += 0.5
-                elif timing >= min_timing:
-                    sat_value += 0.25
-            else:
-                if timing < max_timing:
-                    if timing == min_timing:
-                        sat_value += 0.75
-                    else:  # TODO: elif timing
-                        sat_value += 0.5
-
-        sat_value /= len(stress_values)  # Normalizes value
-
-        syls_long_vowels_sat += sat_value
-    return round(syls_long_vowels_sat / non_empty_phonemes, 4)
-
-
-def f2(**kwargs):
     '''
         Start/end chord should contain tonic triad.
         Returns 0.5 for each condition met
@@ -219,7 +109,7 @@ def f2(**kwargs):
     return points
 
 
-def f3(**kwargs):
+def f2(**kwargs):
     '''
         Returns the portion of chords with dominant triads
         num(dominant triads) / num(chords)
@@ -235,11 +125,10 @@ def f3(**kwargs):
     return round(num_triads / len(chords), 4)
 
 
-def f4(**kwargs):
+def f3(**kwargs):
     '''
         Dominant should resolve in tonic within two measures
         num(resolving dominant chords) / num(dominant chords)
-        # TODO: Find out if functions should be moved to other objective
     '''
 
     chords = [chord[:-1] for chord in kwargs['chords']]
@@ -272,83 +161,7 @@ def f4(**kwargs):
     return round(res_doms / (doms if doms > 0 else 1.0), 4)
 
 
-def f5(**kwargs):
-    '''
-        Returns number of line endings also ending a measure (ending + rest is also ending)
-        num(lines ends measure) / num(lines)
-    '''
-    measures = kwargs['measures']
-    line_ending_indices = kwargs['line_ending_indices']
-
-    num_ends_measure = 0
-    note_total_index = 0
-    for measure in measures:
-        for beat_index in range(len(measure)):
-            for note_index in range(len(measure[beat_index])):
-                if note_total_index in line_ending_indices:
-                    if (beat_index == len(measure) - 1 and note_index == len(measure[beat_index]) - 1):
-                        num_ends_measure += 1
-                note_total_index += 1
-
-    return round(num_ends_measure / len(line_ending_indices), 4)
-
-
-def f6(**kwargs):
-    '''
-        Number of line endings ending on note with longer duration than previous
-        num(notes w. note durations > prev note) / lines
-    '''
-    melody = kwargs['melody']
-    line_ending_indices = kwargs['line_ending_indices']
-
-    count = 0
-    total_note_count = 0
-    for beat_i in range(len(melody)):
-        for note_i in melody[beat_i]:
-            if total_note_count in line_ending_indices:
-                note = melody[beat_i][note_i]
-                if isinstance(note, list):
-                    if len(note) > 1 and get_note_dec_timing(note[-2]) < get_note_dec_timing(note[-1]):
-                        count += 1
-                elif note_i == 0:
-                    if beat_i > 0 and len(melody[beat_i - 1][-1]) > 0 and len(melody[beat_i][note_i]) > 0:
-                        if get_note_dec_timing(melody[beat_i - 1][-1]) < get_note_dec_timing(melody[beat_i][note_i]):
-                            count += 1
-                elif len(melody[beat_i][-1]) > 0 and len(melody[beat_i][note_i]) > 0:
-                    count += 1
-                total_note_count += 1
-
-    return round(count / len(line_ending_indices), 4)
-
-
-def f7(**kwargs):
-    '''
-        Number of line endings ending on tonic
-        num(tonic ending lines) / lines
-    '''
-    line_ending_indices = kwargs['line_ending_indices']
-    tonic = kwargs['scale'][0]
-    melody = kwargs['melody']
-
-    count = 0
-    total_note_count = 0
-    for beat_i in range(len(melody)):
-        for note_i in range(len(melody[beat_i])):
-            if total_note_count in line_ending_indices:
-                note = melody[beat_i][note_i]
-
-                if isinstance(note, list):
-                    if remove_note_octave(remove_note_timing(melody[beat_i][note_i][-1])) == tonic:
-                        count += 1
-                elif remove_note_octave(remove_note_timing(melody[beat_i][note_i])) == tonic:
-                    count += 1
-
-            total_note_count += 1
-
-    return round(count / len(line_ending_indices), 4)
-
-
-def f8(**kwargs):
+def f4(**kwargs):
     '''
         Number of repeated chords
         num(chord_intervals with same chords) / chord_intervals
@@ -368,7 +181,7 @@ def f8(**kwargs):
     return round(count / len(intervals), 4)
 
 
-def f9(**kwargs):
+def f5(**kwargs):  # IGNORED - Not correct objective
     '''
         Return proportion of measures that start with a note on first beat
         num(measure with pitch on first beat) / num(measures)
@@ -382,38 +195,7 @@ def f9(**kwargs):
     return round(count / len(measures), 4)
 
 
-def f10(**kwargs):
-    '''
-        BYPASSED! 15.04.20
-        Return number of chord roots that should have major/minor triad in number of chords
-        maj/min is decided by key
-
-        num(maj/min roots) / num(chords)
-        target_num should probably be 0.4 - 0.5, and somewhat based on sentiment (i.e. increace with high sent. values)
-    '''
-    key = kwargs['key']
-    chords = chords = [chord[:-1] for chord in kwargs['chords']]
-    scale = kwargs['scale']
-    scale_chords = major_scale_chords if key[1] == 'maj' else minor_scale_chords
-
-    count = 0
-    for chord in chords:
-        root = remove_note_octave(chord[0])
-
-        if root in scale:
-            index = scale.index(root)
-
-            if key[1] == 'maj' and scale_chords[index] == 'maj':
-                count += 1
-            elif key[1] == 'min':
-                if scale_chords[index] == 'min' or scale_chords[index] == 'dim':
-                    count += 1
-
-    # return count / len(chords)
-    return 0.60
-
-
-def f11(**kwargs):
+def f6(**kwargs):
     '''
         Returns the portion of chords with tonic triads
         num(tonic triads) / num(chords)
@@ -430,7 +212,7 @@ def f11(**kwargs):
     return round(tonic_triad_chords / len(chords), 4)
 
 
-def f12(**kwargs):
+def f7(**kwargs):
     '''
         Returns the portion of distinct chords
         num(distinct chords) / num(chords)
@@ -441,7 +223,7 @@ def f12(**kwargs):
     return round(len(distinct_chords) / len(chords), 4)
 
 
-def f13(**kwargs):
+def f8(**kwargs):
     '''
         Returns the portion of chords with a 4th flavor note
         num(chords with 4th note) / num(chords)
@@ -449,7 +231,7 @@ def f13(**kwargs):
     return len([chord for chord in kwargs['chords'] if len(chord[:-1]) == 4]) / len(kwargs['chords'])
 
 
-def f14(**kwargs):
+def f9(**kwargs):
     '''
         Returns chord progression starting/ending with dominant triads
         Starts = 0.5, ends = 0.5, 0.0, otherwise
@@ -467,7 +249,7 @@ def f14(**kwargs):
     return points
 
 
-def f15(**kwargs):
+def f10(**kwargs):
     '''
         Returns the portion of tonic triad chords with flavor notes
         num(tonic triads with flavor) / num(tonic triad chords)
@@ -487,24 +269,71 @@ def f15(**kwargs):
     return round(flavor_triads / tonic_triad_chords, 4) if tonic_triad_chords > 0 else 0.0
 
 
-'''
+def f11(**kwargs):  # IGNORED - 30.04.20, but used in harmonic punishment
+    '''
+        Num chord roots in key
+    '''
+    chords = kwargs['chords']
+    scale = kwargs['scale']
+
+    in_scale = 0
+    for chord in chords:
+        if remove_note_octave(chord[0]) in scale:
+            in_scale += 1
+
+    return round(in_scale / len(chords), 4)
+
+
+def f12(**kwargs):  # IGNORED 30.04.20. Moved to harmonic punishment
+    '''
+        Find chords following set scale degrees
+        https://en.wikipedia.org/wiki/Major_scale#Triad_qualities
+        https://en.wikipedia.org/wiki/Minor_scale
+    '''
+
+    chords = [chord[:-1] for chord in kwargs['chords']]
+    key = kwargs['key']
+    scale = kwargs['scale']
+
+    following_scale_degrees = 0
+    for chord in chords:
+        root = remove_note_octave(chord[0])
+
+        if root in scale:
+            for i in range(len(scale)):
+                if root == scale[i]:
+                    if is_correct_triad(chord, key, i):
+                        following_scale_degrees += 1
+
+    return round(following_scale_degrees / len(chords), 4)
+
+
 def f13(**kwargs):
-        # TODO: IMPLEMENT LATER IF NEEDED
-        Gets number of syllables that spans multiple measures
-        num(syls spanning multiple measures)/ num(syls)
-        (Not desired that number is high)
-    pass
-'''
+    '''
+        Find chords with semi-tone dissonace in flavor note
+    '''
+    chords = [chord[:-1] for chord in kwargs['chords']]
+
+    semi_tone_dis = 0
+    for chord in chords:
+        if len(chord) == 3:
+            return 0
+
+        last_note = chord[-1]
+
+        for i in range(len(chord)):
+            if get_note_distance(chord[i], last_note) == 1:
+                semi_tone_dis += 1
+
+    return round(semi_tone_dis / len(chords), 4)
 
 
 '''
 HARMONIC PUNISHMENT
-As all fitness_functions strive for a difference return of 1.0,
-the num of fitness functions is used as a basis for harmonic punishment
 '''
 
 
-def hf1(**kwargs):
+def hf1(fitness_functions, **kwargs):
     '''
         If not at least a 0.30 of chords contains tonic triads
         Return -num(chords) / 3
@@ -512,37 +341,63 @@ def hf1(**kwargs):
         Return -num(chords) / 1.5
         Done to heavily punish chord progressions not revolving around tonic
     '''
-    portion_of_tonics = f11(**kwargs)
-    chords = kwargs['chords']
+    portion_of_tonics = f6(**kwargs)
 
     if portion_of_tonics < 0.30:
-        return -(len(chords) / 3)
+        return -(fitness_functions / 3)
     elif portion_of_tonics < 0.15:
-        return -(len(chords) / 1.5)
+        return -(fitness_functions / 1.5)
 
     return 0
 
 
-def hf2(**kwargs):
+def hf2(fitness_functions, **kwargs):
     '''
-        If a chord is found to be repeated for more than 0.5 of the chord progression
-        Return -num(chords) / 3 if chord is not tonic or -num(fitness_functions) / 4 if tonic
-        Done to heavily punish "monotone" chord progressions
+        Punishes repeating chord progressions
+    '''
+    portion_repeated = f4(**kwargs)
+
+    if portion_repeated < 0.3:
+        return 0
+
+    return -(fitness_functions * portion_repeated)
+
+
+def hf3(fitness_functions, **kwargs):
+    '''
+        Punishes chord progressions where chords does not follow set scale degrees
+    '''
+    portion_of_set_scale_degrees = f12(**kwargs)
+
+    return -(1.5 * fitness_functions - (portion_of_set_scale_degrees * fitness_functions * 1.5))
+
+
+def hf4(fitness_functions, **kwargs):
+    '''
+        Punishes chord progressions based on number of roots not in key
+    '''
+    roots_in_key = f11(**kwargs)
+
+    return -(2 * fitness_functions - (roots_in_key * fitness_functions * 2))
+
+
+def hf5(fitness_functions, **kwargs):
+    '''
+        Punishes flavor note not in chord root key
     '''
     chords = [chord[:-1] for chord in kwargs['chords']]
-    key = kwargs['key']
 
+    count = 0
     for chord in chords:
-        repeated = len([x for x in chords if x == chord])
-        tonic = is_correct_triad(chord, key, 0)
+        if len(chord) < 4:
+            continue
 
-        if repeated > len(chords) / 2:
-            if tonic:
-                return -(len(chords) / 4)  # Maybe 5
-            else:
-                return -(len(chords) / 3)
+        scale = get_scale_notes([chord[0], 'maj']) + get_scale_notes([chord[0], 'min'])
 
-    return 0
+        if remove_note_octave(chord[-1]) not in scale:
+            count += 1
+
+    return -(count * (10 * count / fitness_functions))
 
 
 def is_correct_triad(chord, key, index):

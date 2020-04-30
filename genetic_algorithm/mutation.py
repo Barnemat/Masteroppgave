@@ -244,7 +244,11 @@ def mutate_divide_note(phenotype):
         and makes it a melisma.
         The second note is chosen at random from either the scale or totally random
         Dotted notes are not considered, as it's difficult to handle
+        IGNORED: 29.04.20.
     '''
+
+    apply_mutation(phenotype)  # Try other mutation type
+    return
 
     melody = phenotype.genes[0].copy()
     key = phenotype.key

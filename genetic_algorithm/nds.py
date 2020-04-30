@@ -155,7 +155,7 @@ class NonDominatedSorter:
                     self.tournament_winner_indices.append(index)
 
         self.population = new_population
-        return self.population
+        return self.population, len(new_fronts)
 
     def get_crowding_distance(self, front):
         distances = [0 for x in range(len(front))]
