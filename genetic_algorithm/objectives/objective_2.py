@@ -64,7 +64,7 @@ class Objective2(Objective):
         quanta = get_quanta(notes)
 
         # Testing removal of some fitness functions
-        ignored_funcs = [4, 10, 12, 15, 24]
+        ignored_funcs = [4, 12, 15, 24]
 
         func_num = 0
         fitness_score = 0
@@ -362,7 +362,7 @@ def f9(**kwargs):
     return round(len(notes) / quanta, 4)
 
 
-def f10(**kwargs):  # Try to remove - IGNORED
+def f10(**kwargs):
     '''
         Rest density - num(silent quanta) / quanta
     '''
@@ -638,8 +638,6 @@ def f25(**kwargs):
     last_note = remove_note_timing(remove_note_octave(kwargs['notes'][-1]))
 
     return 1.0 if tonic == last_note else 0.0
-
-# TODO: Perhaps punish repeated 16th notes, and especially repeated whole notes
 
 
 '''

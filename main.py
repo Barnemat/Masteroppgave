@@ -10,7 +10,7 @@ if __name__ == '__main__':
     lyric_title = 'nellie-dean'
     lyric = Lyric(texts[lyric_title], lyric_title)
 
-    population_size = 1000
+    population_size = 1500
     num_generations = 1000
 
     ga = GA(population_size, lyric)

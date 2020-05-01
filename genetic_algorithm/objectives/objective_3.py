@@ -392,7 +392,8 @@ def hf5(fitness_functions, **kwargs):
         if len(chord) < 4:
             continue
 
-        scale = get_scale_notes([chord[0], 'maj']) + get_scale_notes([chord[0], 'min'])
+        root = remove_note_octave(chord[0])
+        scale = get_scale_notes([root, 'maj']) + get_scale_notes([root, 'min'])
 
         if remove_note_octave(chord[-1]) not in scale:
             count += 1

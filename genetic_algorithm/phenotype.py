@@ -104,8 +104,8 @@ class Phenotype:
 
             note = notes[0]
             note_abs_index = get_note_abs_index(note)
-            for x in range(1, randint(3, 4)):  # Allows for chords with 3 or 4 notes
-                if x == 3:
+            for x in range(1, 4):  # Allows for chords with 3 or 4 notes
+                if x == 3 and randint(1, 100) < 25:  # Sets a 25 % chance of 4th note in chord
                     tries = 20
                     note = self.get_random_note(0, True)[:-1]
                     while (tries > 0 and (note in notes or get_note_abs_index(note) <= get_note_abs_index(notes[-1]))):
@@ -114,6 +114,8 @@ class Phenotype:
 
                     if tries == 0:
                         break
+                elif x == 3:
+                    break
                 else:
                     note = absolute_note_list[note_abs_index + triad[x]]
                     if isinstance(note, list):
@@ -187,7 +189,6 @@ class Phenotype:
 
         maj = self.key[1] == 'maj'
 
-        # TODO: If error occurs, check Github master
         if len(note) > 1:
             if self.key in (major[0] if maj else minor[0]):
                 note = note[-1] + 'is'

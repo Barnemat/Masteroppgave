@@ -92,7 +92,7 @@ def get_scale_pitches(measure, scale, chord_notes):
 
 
 def get_non_scale_pitches(measure, chord_pitches, scale_pitches):
-    return [note for note in measure[0] if note not in chord_pitches and note not in scale_pitches]
+    return [note for note in measure[0] if note not in chord_pitches and note not in scale_pitches and not note.startswith('r')]
 
 
 def get_ornament_notes(measure, chord_notes, notes):
@@ -102,7 +102,7 @@ def get_ornament_notes(measure, chord_notes, notes):
     ornament_notes = []
     for index in range(length - 2):  # Passing notes are always concerned with the next two notes
         if melody[index] in chord_notes:
-            if melody[index + 1] in notes and melody[index + 2] in chord_notes:
+            if melody[index + 1] in notes and melody[index + 2] in chord_notes and not melody[index + 1].startswith('r'):
                 ornament_notes.append(melody[index + 1])
 
     return ornament_notes

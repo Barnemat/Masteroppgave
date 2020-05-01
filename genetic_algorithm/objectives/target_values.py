@@ -67,7 +67,7 @@ objective_2_values = {
     'count_stability': 0.60,
     'diatonic_step_movement': 0.40,
     'note_density': 0.30,
-    'rest_density': 0.15,  # IGNORED - 29.04.
+    'rest_density': 0.15,
     'rhythmic_variety': 0.70,
     'rhythmic_range': 0.70,  # IGNORED - 29.04.
     'repeated_pitches': 0.15,
