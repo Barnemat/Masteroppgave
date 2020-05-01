@@ -13,7 +13,8 @@ from genetic_algorithm.GLOBAL import (
     min_notes,
     get_triad_distances,
     get_key_sharps_flats,
-    absolute_note_list
+    absolute_note_list,
+    accurate_beat_counter
 )
 
 '''''''''''''''
@@ -244,7 +245,11 @@ def mutate_divide_note(phenotype):
         and makes it a melisma.
         The second note is chosen at random from either the scale or totally random
         Dotted notes are not considered, as it's difficult to handle
+        IGNORED: 29.04.20.
     '''
+
+    apply_mutation(phenotype)  # Try other mutation type
+    return
 
     melody = phenotype.genes[0].copy()
     key = phenotype.key
@@ -289,42 +294,48 @@ def switch_random_notes(phenotype):
         Only concideres notes with the same timings
         One note is chosen at random and the nearest note with same timing are swapped
     '''
-
     melody = phenotype.genes[0].copy()
-    note, beat = get_random_note_indices(melody)
-    melisma_index = randint(0, len(melody[beat][note]) - 1) if isinstance(melody[beat][note], list) else None
 
-    func = choice([get_random_note_after_index, get_random_note_before_index])
-    switch_beat, switch_note, switch_mel_index = func(melody, beat, note, melisma_index)
+    beat_i = randint(0, len(melody) - 1)
+    tries = 0
+    while len(melody[beat_i]) == 0:
+        beat_i = randint(0, len(melody) - 1)
+        tries += 1
 
-    if not switch_beat:
-        if func == get_random_note_after_index:
-            switch_beat, switch_note, switch_mel_index = get_random_note_before_index(melody, beat, note, melisma_index)
-        else:
-            switch_beat, switch_note, switch_mel_index = get_random_note_after_index(melody, beat, note, melisma_index)
+        if tries == 100:
+            apply_mutation(phenotype)
+            break
 
-    if not switch_beat:
-        apply_mutation(phenotype)  # Try other mutation type
+    note_i = randint(0, len(melody[beat_i]) - 1)
+    init_beat_count = accurate_beat_counter([[melody[beat_i][note_i]]], True)
+
+    beat_swap = randint(0, len(melody) - 1)
+    note_swap = -1
+    tries = 0
+    while (len(melody[beat_swap]) == 0
+            or note_swap == -1
+            or init_beat_count != accurate_beat_counter([[melody[beat_swap][note_swap]]], True)):
+        beat_swap = randint(0, len(melody) - 1)
+        tries += 1
+
+        if tries == 100:
+            apply_mutation(phenotype)
+            break
+
+        if len(melody[beat_swap]) == 0:
+            continue
+
+        note_swap = randint(0, len(melody[beat_swap]) - 1)
+
+    try:
+        note_a = melody[beat_i][note_i]
+        note_b = melody[beat_swap][note_swap]
+    except IndexError:
+        apply_mutation(phenotype)
         return
 
-    a = melody[beat][note][melisma_index] if melisma_index else melody[beat][note]
-    b = melody[switch_beat][switch_note][switch_mel_index] if switch_mel_index else melody[switch_beat][switch_note]
-
-    # Don't have time to properly fix error
-    if isinstance(a, list) or isinstance(b, list):
-        apply_mutation(phenotype)  # Try other mutation type
-        return
-
-    if a and b:
-        if melisma_index:
-            melody[beat][note][melisma_index] = b
-        else:
-            melody[beat][note] = b
-
-        if switch_mel_index:
-            melody[switch_beat][switch_note][switch_mel_index] = a
-        else:
-            melody[switch_beat][switch_note] = a
+    melody[beat_i][note_i] = note_b
+    melody[beat_swap][note_swap] = note_a
 
     phenotype.genes[0] = melody
 
@@ -471,7 +482,7 @@ def apply_mutation(phenotype, reset=False):
     random_note = 5
     scale_note = 30
     timing_in_beat = 45
-    divide_note = 50
+    divide_note = 45
     switch_notes = 60
     random_chord = 65
     random_scale_note_chord = 85

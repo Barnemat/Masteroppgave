@@ -21,15 +21,19 @@ class Objective2(Objective):
 
         self.fitness_functions.extend([
             f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19,
-            f20, f21, f22, f23, f24
+            f20, f21, f22, f23, f24, f25
         ])
+
+        self.melodic_punishment_functions = [
+            mf2
+        ]
 
         if target_values:
             self.target_values = target_values
         else:
             self.target_values = [
                 0.30, 0.35, 0.35, 0.00, 0.10, 0.60, 0.50, 0.30, 0.30, 0.10, 0.40,  # Rhythmic variety
-                0.80, 0.20, 0.50, 0.40, 0.20, 0.20, 0.10, 0.10, 0.20, 0.10, 0.10, 0.00, 0.40
+                0.80, 0.20, 0.50, 0.40, 0.20, 0.20, 0.10, 0.10, 0.20, 0.10, 0.10, 0.00, 0.40, 1.00
             ]
 
         '''
@@ -59,17 +63,16 @@ class Objective2(Objective):
         intervals = get_intervals(notes)
         quanta = get_quanta(notes)
 
-        # print(melody)
-        # print(key, time_signature)
-        # print(scale)
-        # print(notes)
-        # print(intervals)
-        # print(quanta)
+        # Testing removal of some fitness functions
+        ignored_funcs = [4, 12, 15, 24]
 
         func_num = 0
         fitness_score = 0
         for func in self.fitness_functions:
             # print('fitness function:', func_num + 1)
+            if func_num + 1 in ignored_funcs:
+                continue
+
             fitness_score += self.compare_with_target_value(func(
                 melody=melody,
                 key=key,
@@ -82,6 +85,9 @@ class Objective2(Objective):
             # self.fitness_score += fitness_score
             # print(fitness_score)
             func_num += 1
+
+        for func in self.melodic_punishment_functions:
+            fitness_score += func(len(self.fitness_functions), notes=notes)
 
         return round(fitness_score, 4)
 
@@ -141,17 +147,31 @@ def is_diatonic_distance(note1, note2):
     '''
     distance = get_note_distance(note1, note2)
 
-    if distance == 2:
-        return True
-    elif distance != 1:
+    if distance == 0:
         return False
 
     clean_n1 = remove_note_octave(remove_note_timing(note1))
     clean_n2 = remove_note_octave(remove_note_timing(note2))
+    possible_semitone_dists = [['e', 'b'], ['f', 'c']]
+    n1_less_than_n2 = get_note_abs_index(remove_note_timing(note1)) < get_note_abs_index(remove_note_timing(note2))
 
     if (clean_n1 == 'e' and clean_n2 == 'f') or (clean_n1 == 'f' and clean_n2 == 'e'):
         return True
     elif (clean_n1 == 'b' and clean_n2 == 'c') or (clean_n1 == 'c' and clean_n2 == 'b'):
+        return True
+    elif distance == 2:
+        if clean_n1 in possible_semitone_dists[0] and n1_less_than_n2:
+            return False
+
+        if clean_n2 in possible_semitone_dists[0] and not n1_less_than_n2:
+            return False
+
+        if clean_n1 in possible_semitone_dists[1] and not n1_less_than_n2:
+            return False
+
+        if clean_n2 in possible_semitone_dists[1] and n1_less_than_n2:
+            return False
+
         return True
 
     return False
@@ -220,7 +240,7 @@ def f3(**kwargs):
     return round(pitch_quanta / quanta, 4)
 
 
-def f4(**kwargs):
+def f4(**kwargs):  # Might be covered enough in o1, try to remove - IGNORED
     '''
         Non-scale notes - num(pitch not in scale quanta) / quanta
     '''
@@ -359,13 +379,13 @@ def f11(**kwargs):
         Important: changed denominator from 16 to num_possible note durations
     '''
     notes = kwargs['notes']
-    possible_durations = ((max_note_divisor // 4) * 2) + 1  # Dotted notes doubles + 1 the possible values
+    possible_durations = ((max_note_divisor // 4) * 2)  # Dotted notes doubles + 1 the possible values
     note_durations = list(set([get_note_timing(note) for note in notes]))
 
     return round(len(note_durations) / possible_durations, 4)
 
 
-def f12(**kwargs):
+def f12(**kwargs):  # Try to remove - IGNORED
     '''
         Rhytmic range - max(note duration) +  min(note duration) / num(possible note durations)
         Important: Changed to be based on the number of different possibilities
@@ -416,7 +436,7 @@ def f14(**kwargs):
     return round(same_duration_intervals / len(intervals), 4)
 
 
-def f15(**kwargs):
+def f15(**kwargs):  # Remove - IGNORED
     '''
         On-beat pitch - num(beats covered by one pitch) / num(beats)
         Update: 24.04.20. BYPASSED
@@ -514,15 +534,6 @@ def f19(**kwargs):
     return round(repeated_4_patterns / (len(notes) - 5), 4)
 
 
-'''
-def f13(**kwargs):
-    ''''''
-    Syncopation - Come back this
-    ''''''
-    pass
-'''
-
-
 '''''''''''''''
 NOVEL FITNESS FUNCTIONS
 '''''''''''''''
@@ -598,7 +609,7 @@ def f23(**kwargs):
     return round(repeated_patterns / (len(notes) - 3), 4)
 
 
-def f24(**kwargs):
+def f24(**kwargs):  # Try to remove - IGNORED
     '''
         Returns the portion of melismas that are equal to other melismas
     '''
@@ -619,4 +630,43 @@ def f24(**kwargs):
     return round(repeated_melismas / len(melismas)) if len(melismas) > 0 else 0.0
 
 
-# TODO: Perhaps punish repeated 16th notes, and especially repeated whole notes
+def f25(**kwargs):
+    '''
+        Returns 1.0 if last note is tonic
+    '''
+    tonic = kwargs['key'][0]
+    last_note = remove_note_timing(remove_note_octave(kwargs['notes'][-1]))
+
+    return 1.0 if tonic == last_note else 0.0
+
+
+'''
+MELODIC PUNISHMENT
+'''
+
+
+def mf1(fitness_functions, **kwargs):
+    '''
+        If a large number of 16th or whole notes (> 1/4 of notes) appear in melody
+        Return -num(fitness_functions) / 4
+    '''
+    portion_whole_notes = f22(**kwargs)
+    portion_16_notes = f21(**kwargs)
+
+    return fitness_functions / 4 if portion_whole_notes > 0.25 or portion_16_notes > 0.25 else 0
+
+
+def mf2(fitness_functions, **kwargs):
+    '''
+        If a whole or 16th note is repeated for an interval, punishment is due
+    '''
+    notes = kwargs['notes']
+
+    count = 0
+    for i in range(1, len(notes)):
+        t1, t2 = get_note_timing(notes[i - 1]), get_note_timing(notes[i])
+
+        if (t1 == 16 and t2 == 16) or (t1 == 1 and t2 == 1):
+            count += 1
+
+    return (count / (fitness_functions * 0.01)) / 2  # Possibly 1.5 denominator

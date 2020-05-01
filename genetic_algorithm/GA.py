@@ -8,7 +8,11 @@ from genetic_algorithm.objectives.objective_1 import Objective1
 from genetic_algorithm.objectives.objective_2 import Objective2
 from genetic_algorithm.objectives.objective_3 import Objective3
 from genetic_algorithm.objectives.objective_4 import Objective4
-from genetic_algorithm.objectives.target_values import get_o2_values_as_list, get_o3_values_as_list
+from genetic_algorithm.objectives.target_values import (
+    get_o2_values_as_list,
+    get_o3_values_as_list,
+    get_o4_values_as_list
+)
 from syllable_handling.syllable_handling import SyllableDetector
 from genetic_algorithm.nds import NonDominatedSorter
 
@@ -26,6 +30,7 @@ class GA:
         self.time_signature = time_signature if time_signature else lyric.measure_handler.measure
         self.sentiment = lyric.get_sentiment()
         self.tournament_winner_indices = []
+        self.front_counter = 0
 
         self.generate_musical_key()
         self.set_possible_note_lengths()
@@ -36,7 +41,7 @@ class GA:
             Objective1(),
             Objective2(target_values=get_o2_values_as_list()),
             Objective3(self.syllable_detector.syllables, self.phonemes, target_values=get_o3_values_as_list()),
-            Objective4()
+            Objective4(self.syllable_detector.syllables, self.phonemes, target_values=get_o4_values_as_list())
         ]
 
     def set_possible_note_lengths(self):
@@ -77,8 +82,16 @@ class GA:
 
     def iterate(self):
         nds = NonDominatedSorter(self.population, self.objectives, self.population_size)
-        self.population = nds.get_new_population()
+        self.population, num_fronts = nds.get_new_population()
         self.tournament_winner_indices = nds.tournament_winner_indices.copy()
+
+        print('num_fronts', num_fronts)
+        if num_fronts == 1:  # If all individuals are considered pareto optimal for long, terminate
+            self.front_counter += 1
+        else:
+            self.front_counter = 0
+
+        return self.front_counter > 100
 
 
 def get_valid_min_key(note):
