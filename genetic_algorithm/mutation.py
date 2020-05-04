@@ -226,6 +226,10 @@ def mutate_timing_in_beat(phenotype):
 
         tries_left -= 1
 
+    if tries_left == 0:
+        apply_mutation(phenotype)  # Try other mutation type
+        return
+
     if mel_index_1 > -1:
         melody[beat_index][note1_index][mel_index_1] = remove_note_timing(note1[mel_index_1]) + timing_2
     else:
@@ -345,7 +349,7 @@ Chord mutations
 '''''''''''''''
 
 
-def mutate_random_chord(phenotype, root=None):
+def mutate_random_chord(phenotype, root=None):  # IGNORED 1.5.
     '''
         Finds a completely random chord root, and generates a valid triad chord,
         with a possibility for an extra note
@@ -484,9 +488,9 @@ def apply_mutation(phenotype, reset=False):
     timing_in_beat = 45
     divide_note = 45
     switch_notes = 60
-    random_chord = 65
-    random_scale_note_chord = 85
-    switch_chords = 95
+    random_chord = 60
+    random_scale_note_chord = 80
+    switch_chords = 90
     extra_note_chord = 100
 
     p = randint(0, switch_chords)

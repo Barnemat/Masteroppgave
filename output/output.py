@@ -77,8 +77,9 @@ class LilyPondFileGenerator:
 
                     for sub_mel_note in note:
                         timing = get_note_timing(sub_mel_note)
+                        beam_stops = ['1', '2', '2.', '4', '4.']
 
-                        if timing.startswith('1') or timing.startswith('2') or timing.startswith('4'):
+                        if timing in beam_stops:
                             stop_beam = True
 
                     output += first_mel_note + '([ ' if not stop_beam else first_mel_note + '('
