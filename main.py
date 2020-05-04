@@ -7,7 +7,7 @@ from random import randint, choice
 
 if __name__ == '__main__':
     texts = load_lyrics('/lyrics/')
-    lyric_title = 'nellie-dean'
+    lyric_title = 'henry-martin'
     lyric = Lyric(texts[lyric_title], lyric_title)
 
     population_size = 1500
@@ -32,7 +32,7 @@ if __name__ == '__main__':
                     phenotype = ga.population[randint(0, len(ga.population) - 1)]
 
                 file_generator = LilyPondFileGenerator(phenotype.genes, ga.key, ga.time_signature, lyric.get_syllables())
-                file_generator.generate_file(os.getcwd() + '/output/outfiles/semi-done/' + str(i) + '/')
+                file_generator.generate_file(os.getcwd() + '/output/outfiles/done/' + str(i) + '/')
 
         if should_terminate:
             break
