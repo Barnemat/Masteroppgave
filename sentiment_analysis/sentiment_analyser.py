@@ -3,7 +3,6 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from statistics import mean
 
 from load_and_store import load_lyrics  # TODO FIX
-from sentiment_analysis.cosine_similarity import get_cosine_similarities
 
 # Add more cleaning, if needed
 def string_cleaner(sentence):
@@ -15,34 +14,6 @@ def string_cleaner(sentence):
 
 def text_cleaner(sentences):
   return list(map(string_cleaner, sentences))
-
-
-# Used to remove repeated or overly similar song lines in the evaluation (chorus, etc.)
-def clean_lyric(lyric):
-  cleaned_lyric = text_cleaner(lyric)
-  cosine_sims = get_cosine_similarities(cleaned_lyric)
-  sim_threshold = 0.8 # Kan muligens tweakes
-  removed_indices = set()
-
-  for index in range(len(cleaned_lyric)):
-    similarities = cosine_sims[index]
-    for sim_index in range(index, len(similarities)):
-      if index == sim_index: continue
-
-      if similarities[sim_index] >= sim_threshold and sim_index not in removed_indices:
-        removed_indices.add(sim_index)
-        break
-
-  removed_indices = list(removed_indices)
-  removed_indices.sort(reverse = True)
-
-  for i in removed_indices:
-    cleaned_lyric.pop(i)
-
-  #print(removed_indices)
-  #print(cleaned_lyric)
-  #print(cosine_sims)
-  return cleaned_lyric
 
 
 def lyric_analyser(sentences, directory = None, lyric = None):
@@ -59,7 +30,6 @@ def lyric_analyser(sentences, directory = None, lyric = None):
 
     complete_lyric = ''
     lines = 0
-    #for line in clean_lyric(lyrics[title]):
     for line in lyrics[title]:
       if line.strip() == '': continue
 
