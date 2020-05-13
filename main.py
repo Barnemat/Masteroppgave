@@ -7,7 +7,7 @@ from random import randint, choice
 
 if __name__ == '__main__':
     texts = load_lyrics('/lyrics/')
-    lyric_title = 'henry-martin'
+    lyric_title = 'nellie-dean'
     lyric = Lyric(texts[lyric_title], lyric_title)
 
     population_size = 1500

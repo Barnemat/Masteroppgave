@@ -336,9 +336,9 @@ HARMONIC PUNISHMENT
 def hf1(fitness_functions, **kwargs):
     '''
         If not at least a 0.30 of chords contains tonic triads
-        Return -num(chords) / 3
+        Return -num(fitness_functions) / 3
         If not at least a 0.15 of chords contains tonic triads
-        Return -num(chords) / 1.5
+        Return -num(fitness_functions) / 1.5
         Done to heavily punish chord progressions not revolving around tonic
     '''
     portion_of_tonics = f6(**kwargs)
