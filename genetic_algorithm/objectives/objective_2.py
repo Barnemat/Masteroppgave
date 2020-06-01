@@ -36,22 +36,6 @@ class Objective2(Objective):
                 0.80, 0.20, 0.50, 0.40, 0.20, 0.20, 0.10, 0.10, 0.20, 0.10, 0.10, 0.00, 0.40, 1.00
             ]
 
-        '''
-        Olseng values:
-        Step Movement 0.60
-        Non-Scale Pitch Quanta 0.00
-        Contour Stability 0.60
-        Contour Direction 0.70
-        Pitch Frequency 0.30
-        Rest Frequency 0.10
-        Rest Density 0.10
-        Rhythmic Variety 0.40
-        Syncopation 0.00
-        Repeated Pitches 0.30
-        Repeated Timings 0.65
-        On-Beat Pitch Coverage 0.70
-        '''
-
     def get_total_fitness_value(self, phenotype):
         '''
         '''
@@ -111,7 +95,7 @@ def get_notes(melody):
 
 def get_intervals(notes):
     '''
-        Intervals are all pairs of two pitches,
+        Intervals are all pairs of two notes,
         ignore rests
     '''
 
@@ -177,18 +161,9 @@ def is_diatonic_distance(note1, note2):
     return False
 
 
-'''
-    **kwargs:
-    notes
-    num_notes
-    intervals
-    quanta (16th notes - time steps)
-'''
-
-
 def f1(**kwargs):
     '''
-        Pitch variety - num(distinct pitches) / num(notes)
+        Note variety - num(distinct notes) / num(notes)
     '''
     notes = kwargs['notes']
     distinct_notes = list(set([remove_note_octave(remove_note_timing(x)) for x in notes]))
@@ -198,7 +173,7 @@ def f1(**kwargs):
 
 def f2(**kwargs):
     '''
-        Pitch range - max(pitch) - min(pitch) / desired note range
+        Note range - max(note) - min(note) / desired note range
         Change the desired note range for bigger/smaller spans
     '''
     notes = [remove_note_timing(note) for note in kwargs['notes']]
@@ -223,8 +198,8 @@ def f2(**kwargs):
 
 def f3(**kwargs):
     '''
-        Key focus - num(pitch quanta) / quanta
-        Pitch is either dominant or tonic
+        Key focus - num(note quanta) / quantas
+        note is either dominant or tonic
     '''
     notes = [note for note in kwargs['notes']]
     notes_no_timing = [remove_note_octave(remove_note_timing(note)) for note in notes]
@@ -236,13 +211,13 @@ def f3(**kwargs):
         if notes_no_timing[note_index] == scale[0] or notes_no_timing[note_index] == scale[4]:
             tonic_dominant.append(notes[note_index])
 
-    pitch_quanta = get_quanta(tonic_dominant)
-    return round(pitch_quanta / quanta, 4)
+    note_quanta = get_quanta(tonic_dominant)
+    return round(note_quanta / quanta, 4)
 
 
 def f4(**kwargs):  # Might be covered enough in o1, try to remove - IGNORED
     '''
-        Non-scale notes - num(pitch not in scale quanta) / quanta
+        Non-scale notes - num(note not in scale quanta) / quantas
     '''
     notes = [note for note in kwargs['notes']]
     notes_no_timing = [remove_note_octave(remove_note_timing(note)) for note in notes if note != 'r']
@@ -314,7 +289,7 @@ def f6(**kwargs):
 def f7(**kwargs):
     '''
         Contour stability - num(concequtive intervals) / num(intervals) - 1
-        If three concecutive notes are same pitch, they are counted
+        If three concecutive notes are same note, they are counted
         # TODO: TEST MORE THOROUGLY
     '''
     intervals = kwargs['intervals']
@@ -399,7 +374,7 @@ def f12(**kwargs):  # Try to remove - IGNORED
 
 def f13(**kwargs):
     '''
-        Repeated pitches - num(intervals containing same notes) / num(intervals)
+        Repeated notes - num(intervals containing same notes) / num(intervals)
     '''
     intervals = kwargs['intervals']
 
@@ -438,23 +413,23 @@ def f14(**kwargs):
 
 def f15(**kwargs):  # Remove - IGNORED
     '''
-        On-beat pitch - num(beats covered by one pitch) / num(beats)
+        On-beat note - num(beats covered by one note) / num(beats)
         Update: 24.04.20. BYPASSED
     '''
     melody = kwargs['melody']
 
-    one_beat_pitches = 0
+    one_beat_notes = 0
     for beat in melody:
         if len(beat) == 1:
-            one_beat_pitches += 1
+            one_beat_notes += 1
 
-    # return round(one_beat_pitches / len(melody), 4)
+    # return round(one_beat_notes / len(melody), 4)
     return 0.35
 
 
 def f16(**kwargs):
     '''
-        Repeated pitch patterns (3 notes) - num(repeated patterns of 3 notes) / num(notes) - 4
+        Repeated note patterns (3 notes) - num(repeated patterns of 3 notes) / num(notes) - 4
     '''
     notes = kwargs['notes']
 
@@ -492,7 +467,7 @@ def f17(**kwargs):
 
 def f18(**kwargs):
     '''
-        Repeated pitch patterns (4 notes) - num(repeated patterns of 4 notes) / num(notes) - 5
+        Repeated note patterns (4 notes) - num(repeated patterns of 4 notes) / num(notes) - 5
     '''
     notes = kwargs['notes']
 
@@ -592,8 +567,8 @@ def f22(**kwargs):
 
 def f23(**kwargs):
     '''
-        Repeated pitches in patterns of 4
-        More rigorous testing for repeated pitches - looks three steps forward
+        Repeated notes in patterns of 4
+        More rigorous testing for repeated notes - looks three steps forward
     '''
     notes = kwargs['notes']
 
@@ -647,6 +622,7 @@ MELODIC PUNISHMENT
 
 def mf1(fitness_functions, **kwargs):
     '''
+        Large number of extreme notes
         If a large number of 16th or whole notes (> 1/4 of notes) appear in melody
         Return -num(fitness_functions) / 4
     '''
@@ -658,6 +634,7 @@ def mf1(fitness_functions, **kwargs):
 
 def mf2(fitness_functions, **kwargs):
     '''
+        Extreme note intervals
         If a whole or 16th note is repeated for an interval, punishment is due
     '''
     notes = kwargs['notes']

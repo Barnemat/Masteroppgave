@@ -55,6 +55,7 @@ def lyric_analyser(sentences, directory = None, lyric = None):
     #print('Accumulated scores: ', acc_scores)
     #print('Accumulated scores total: ', acc_scores_sum)
     print('Full text score: ', complete_lyric_scores)
+    print('Sentence scores:', sum([x['compound'] for x in scores]) / len(scores))
     print('From find_sentiment: ', data) # Find sentiment scans each line in the lyric independently
     #print('Normalized: ', normalize(data, -4, 4))
     print('')

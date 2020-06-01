@@ -145,8 +145,9 @@ def f3(**kwargs):  # Kan kanskje fjernes
     return 1 if len(kwargs['non_scale_pitches']) < len(kwargs['ornament_notes']) else 0
 
 
-def f4(**kwargs):
+def f4(**kwargs):  # Has definitive flaw. Does not work, as it does not look at chord notes in melody
     '''
+        Can be IGNORED in architecture, as it always returns 0
         Added back from Wu:
         at least one root or fifth of chord (tonic or dominant)
         = +1 fitness score
@@ -225,7 +226,7 @@ def f7(**kwargs):
     return fitness_score
 
 
-def f8(**kwargs):  # Kan muligens fjernes
+def f8(**kwargs):  # Kan muligens fjernes - IGNORED
     '''
         Awards measures with at least numerator amount of notes from time_signature
         Fitness +1

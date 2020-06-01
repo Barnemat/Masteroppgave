@@ -71,7 +71,7 @@ class Objective4(Objective):
 
 def f1(**kwargs):
     '''
-        Word in lyric stress and rhythm satisfaction
+        Word in lyric stress and duration satisfaction
         Returns a normalized value for how the syllables in words throughout the lyric
         satisfies stress constraints from cmudict phonemes
         The function reward longer notes for primary stress values and shorter notes for no stress values etc.
