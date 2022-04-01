@@ -1,6 +1,9 @@
 # Master's Thesis (Masteroppgave)
 An implementation of a system that takes an input lyric and generates a melody line with some harmony for the given lyric by using the NSGAII algorithm.
 
+## Link to thesis
+[Sondre Søberg. *Lyric-based melody generation: Making use of multi-objective optimisation.* Master’s thesis, Norwegian University of Science and Technology, June 2020.](https://hdl.handle.net/11250/2777512)
+
 ## Usage
 Python version should be ``Python 3.6.9``, and the library [NLTK](https://www.nltk.org/) must be installed (e.g. by using [pip](https://pip.pypa.io/en/stable/installing/)). Some packages such as [VADER](https://github.com/cjhutto/vaderSentiment) and SonorityTokezier are bundled with NLTK, and must be installed through NLTK's installer.
 
